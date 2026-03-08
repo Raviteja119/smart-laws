@@ -57,7 +57,7 @@ export default function AskTheBill() {
         },
         body: JSON.stringify({
           messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })),
-          documentId: selectedDocId || undefined,
+          documentId: selectedDocId === "__general__" ? undefined : selectedDocId,
         }),
       });
 

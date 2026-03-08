@@ -5,17 +5,32 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
   RadialBarChart, RadialBar, PolarAngleAxis,
 } from "recharts";
-
-const funnelData = [
-  { name: "Original Tokens", value: 120000, fill: "hsl(221, 83%, 53%)" },
-  { name: "After Chunking", value: 35000, fill: "hsl(262, 83%, 58%)" },
-  { name: "After Compression", value: 8000, fill: "hsl(38, 92%, 50%)" },
-  { name: "Sent to AI", value: 2500, fill: "hsl(142, 71%, 45%)" },
-];
-
-const densityData = [{ value: 87, fill: "hsl(221, 83%, 53%)" }];
+import { useDocuments } from "@/hooks/useDocuments";
 
 export default function TokenEfficiency() {
+  const { data: documents } = useDocuments();
+  const analyzed = documents?.filter((d) => d.status === "analyzed") || [];
+
+  const totalOriginal = analyzed.reduce((s, d) => s + (d.token_count || 0), 0);
+  const avgCompression = analyzed.length
+    ? analyzed.reduce((s, d) => s + (Number(d.compression_rate) || 0), 0) / analyzed.length
+    : 0;
+  const compressed = Math.round(totalOriginal * (1 - avgCompression / 100));
+  const sentToAI = Math.round(compressed * 0.3);
+  const overallReduction = totalOriginal > 0 ? ((1 - sentToAI / totalOriginal) * 100).toFixed(1) : "0";
+  const costSaved = Math.round(totalOriginal * 0.02);
+  const energySaved = (totalOriginal * 0.0001).toFixed(1);
+  const densityScore = Math.min(95, Math.round(avgCompression * 1.1));
+
+  const funnelData = [
+    { name: "Original Tokens", value: totalOriginal, fill: "hsl(221, 83%, 53%)" },
+    { name: "After Chunking", value: compressed, fill: "hsl(262, 83%, 58%)" },
+    { name: "After Compression", value: Math.round(compressed * 0.5), fill: "hsl(38, 92%, 50%)" },
+    { name: "Sent to AI", value: sentToAI, fill: "hsl(142, 71%, 45%)" },
+  ];
+
+  const densityData = [{ value: densityScore, fill: "hsl(221, 83%, 53%)" }];
+
   return (
     <div className="page-container">
       <div className="page-header">
@@ -24,12 +39,12 @@ export default function TokenEfficiency() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Original Tokens" value="120,000" icon={Activity} />
-        <StatCard title="Compressed Tokens" value="35,000" change="70.8% reduction" icon={TrendingDown} gradient="gradient-success" />
-        <StatCard title="Tokens Sent to AI" value="2,500" change="97.9% reduction" icon={Zap} gradient="gradient-primary" />
-        <StatCard title="Compression Rate" value="97.9%" icon={ArrowDown} gradient="gradient-warning" />
-        <StatCard title="Estimated Cost Saved" value="₹2,340" change="vs. uncompressed" icon={DollarSign} gradient="gradient-success" />
-        <StatCard title="Energy Saved" value="3.2 kWh" change="~2.1 kg CO₂ avoided" icon={Leaf} gradient="gradient-success" />
+        <StatCard title="Original Tokens" value={totalOriginal.toLocaleString()} icon={Activity} />
+        <StatCard title="Compressed Tokens" value={compressed.toLocaleString()} change={`${avgCompression.toFixed(1)}% reduction`} icon={TrendingDown} gradient="gradient-success" />
+        <StatCard title="Tokens Sent to AI" value={sentToAI.toLocaleString()} change={`${overallReduction}% reduction`} icon={Zap} gradient="gradient-primary" />
+        <StatCard title="Compression Rate" value={`${avgCompression.toFixed(1)}%`} icon={ArrowDown} gradient="gradient-warning" />
+        <StatCard title="Estimated Cost Saved" value={`₹${costSaved.toLocaleString()}`} change="vs. uncompressed" icon={DollarSign} gradient="gradient-success" />
+        <StatCard title="Energy Saved" value={`${energySaved} kWh`} change={`~${(Number(energySaved) * 0.65).toFixed(1)} kg CO₂ avoided`} icon={Leaf} gradient="gradient-success" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -48,15 +63,6 @@ export default function TokenEfficiency() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground">
-            <span>120,000</span>
-            <ArrowDown className="h-3 w-3" />
-            <span>35,000</span>
-            <ArrowDown className="h-3 w-3" />
-            <span>8,000</span>
-            <ArrowDown className="h-3 w-3" />
-            <span className="font-semibold text-success">2,500</span>
-          </div>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="glass-card p-6 flex flex-col items-center">
@@ -68,7 +74,7 @@ export default function TokenEfficiency() {
             </RadialBarChart>
           </ResponsiveContainer>
           <div className="-mt-16 text-center">
-            <p className="text-5xl font-bold text-foreground">87%</p>
+            <p className="text-5xl font-bold text-foreground">{densityScore}%</p>
             <p className="text-sm text-muted-foreground mt-1">Information Density</p>
           </div>
           <p className="text-xs text-muted-foreground text-center mt-8 max-w-xs">

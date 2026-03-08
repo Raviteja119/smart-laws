@@ -136,7 +136,7 @@ export default function AskTheBill() {
                 <SelectValue placeholder="Select document context" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">General (no document)</SelectItem>
+                <SelectItem value="__general__">General (no document)</SelectItem>
                 {analyzedDocs.map((doc) => (
                   <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
                 ))}

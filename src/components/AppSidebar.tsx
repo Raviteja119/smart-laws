@@ -1,11 +1,13 @@
 import {
   LayoutDashboard, Upload, FileText, MessageSquare, GitCompare,
-  Gauge, Settings, Scale, ChevronLeft, Menu, LogOut,
+  Gauge, Settings, Scale, ChevronLeft, Menu, LogOut, SplitSquareHorizontal,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { NotificationBell } from "@/components/NotificationBell";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -103,13 +105,17 @@ export function AppSidebar() {
             {collapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
           {!collapsed && (
-            <button
-              onClick={signOut}
-              className="flex items-center justify-center h-8 w-8 rounded-md text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ml-auto"
-              title={t("sign_out")}
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+            <>
+              <GlobalSearch />
+              <NotificationBell />
+              <button
+                onClick={signOut}
+                className="flex items-center justify-center h-8 w-8 rounded-md text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ml-auto"
+                title={t("sign_out")}
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </>
           )}
         </div>
       </SidebarFooter>

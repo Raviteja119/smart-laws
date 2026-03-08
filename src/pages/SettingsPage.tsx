@@ -3,16 +3,17 @@ import { motion } from "framer-motion";
 import { Globe, Sun, Moon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const languages = [
   { value: "en", label: "English" },
-  { value: "hi", label: "Hindi" },
-  { value: "te", label: "Telugu" },
-  { value: "ta", label: "Tamil" },
+  { value: "hi", label: "हिन्दी (Hindi)" },
+  { value: "te", label: "తెలుగు (Telugu)" },
+  { value: "ta", label: "தமிழ் (Tamil)" },
 ];
 
 export default function SettingsPage() {
-  const [language, setLanguage] = useState("en");
+  const { lang, setLang, t } = useLanguage();
   const [theme, setTheme] = useState("light");
 
   const handleTheme = (value: string) => {
@@ -22,9 +23,11 @@ export default function SettingsPage() {
 
   return (
     <div className="page-container">
+      <div className="page-bg" />
+      <div className="page-bg-accent" />
       <div className="page-header">
-        <h1 className="page-title">Settings</h1>
-        <p className="page-subtitle">Customize your experience</p>
+        <h1 className="page-title">{t("settings")}</h1>
+        <p className="page-subtitle">{t("customize_experience")}</p>
       </div>
 
       <div className="max-w-2xl space-y-6">
@@ -34,21 +37,21 @@ export default function SettingsPage() {
               <Globe className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Language Selection</h3>
-              <p className="text-xs text-muted-foreground">Choose your preferred language</p>
+              <h3 className="text-sm font-semibold text-foreground">{t("language_selection")}</h3>
+              <p className="text-xs text-muted-foreground">{t("choose_language")}</p>
             </div>
           </div>
-          <RadioGroup value={language} onValueChange={setLanguage} className="grid grid-cols-2 gap-3">
-            {languages.map((lang) => (
+          <RadioGroup value={lang} onValueChange={(v) => setLang(v as any)} className="grid grid-cols-2 gap-3">
+            {languages.map((l) => (
               <Label
-                key={lang.value}
-                htmlFor={lang.value}
+                key={l.value}
+                htmlFor={l.value}
                 className={`flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all ${
-                  language === lang.value ? "border-primary bg-primary/5" : "border-border hover:bg-accent/50"
+                  lang === l.value ? "border-primary bg-primary/5" : "border-border hover:bg-accent/50"
                 }`}
               >
-                <RadioGroupItem value={lang.value} id={lang.value} />
-                <span className="text-sm font-medium text-foreground">{lang.label}</span>
+                <RadioGroupItem value={l.value} id={l.value} />
+                <span className="text-sm font-medium text-foreground">{l.label}</span>
               </Label>
             ))}
           </RadioGroup>
@@ -60,14 +63,14 @@ export default function SettingsPage() {
               {theme === "light" ? <Sun className="h-5 w-5 text-muted-foreground" /> : <Moon className="h-5 w-5 text-muted-foreground" />}
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Theme</h3>
+              <h3 className="text-sm font-semibold text-foreground">{t("theme")}</h3>
               <p className="text-xs text-muted-foreground">Switch between light and dark mode</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { value: "light", label: "Light Mode", icon: Sun },
-              { value: "dark", label: "Dark Mode", icon: Moon },
+              { value: "light", label: t("light_mode"), icon: Sun },
+              { value: "dark", label: t("dark_mode"), icon: Moon },
             ].map((opt) => (
               <button
                 key={opt.value}

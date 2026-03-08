@@ -5,6 +5,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -12,14 +13,14 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const navItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Upload Bill", url: "/upload", icon: Upload },
-  { title: "Document Analysis", url: "/analysis", icon: FileText },
-  { title: "Ask the Bill", url: "/chat", icon: MessageSquare },
-  { title: "Bill Comparison", url: "/comparison", icon: GitCompare },
-  { title: "Token Efficiency", url: "/tokens", icon: Gauge },
-  { title: "Settings", url: "/settings", icon: Settings },
+const navKeys = [
+  { key: "dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { key: "upload_bill", url: "/upload", icon: Upload },
+  { key: "document_analysis", url: "/analysis", icon: FileText },
+  { key: "ask_the_bill", url: "/chat", icon: MessageSquare },
+  { key: "bill_comparison", url: "/comparison", icon: GitCompare },
+  { key: "token_efficiency", url: "/tokens", icon: Gauge },
+  { key: "settings", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -27,6 +28,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
 
   const initials = user?.user_metadata?.display_name
     ? user.user_metadata.display_name.slice(0, 2).toUpperCase()
@@ -52,11 +54,12 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
+              {navKeys.map((item) => {
                 const isActive = location.pathname === item.url;
+                const title = t(item.key);
                 return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
+                  <SidebarMenuItem key={item.key}>
+                    <SidebarMenuButton asChild isActive={isActive} tooltip={title}>
                       <NavLink
                         to={item.url}
                         end
@@ -64,7 +67,7 @@ export function AppSidebar() {
                         activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span>{item.title}</span>}
+                        {!collapsed && <span>{title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -76,7 +79,6 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-3 space-y-2">
-        {/* User info */}
         <div className="flex items-center gap-3 px-1">
           <Avatar className="h-8 w-8 shrink-0">
             <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs">
@@ -104,7 +106,7 @@ export function AppSidebar() {
             <button
               onClick={signOut}
               className="flex items-center justify-center h-8 w-8 rounded-md text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ml-auto"
-              title="Sign out"
+              title={t("sign_out")}
             >
               <LogOut className="h-4 w-4" />
             </button>

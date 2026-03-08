@@ -1,12 +1,14 @@
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { StatCard } from "@/components/StatCard";
-import { FileText, Zap, FolderOpen, Leaf } from "lucide-react";
+import { FileText, Zap, FolderOpen, Leaf, Search, Filter } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const tokenData = [
   { month: "Jan", original: 120000, compressed: 35000 },
@@ -34,6 +36,8 @@ const recentDocs = [
   { name: "National Education Policy Draft", date: "2026-02-25", compression: 75, status: "Analyzed" },
 ];
 
+const statuses = ["All", "Analyzed", "Processing"] as const;
+
 const container = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.08 } },
@@ -41,6 +45,17 @@ const container = {
 const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 export default function Dashboard() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+
+  const filteredDocs = useMemo(() => {
+    return recentDocs.filter((doc) => {
+      const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "All" || doc.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [searchQuery, statusFilter]);
+
   return (
     <div className="page-container">
       <div className="page-header">
@@ -108,8 +123,31 @@ export default function Dashboard() {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="glass-card overflow-hidden">
-        <div className="p-6 pb-0">
+        <div className="p-6 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h3 className="section-title">Recent Documents</h3>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search documents..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 w-full sm:w-56 rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30 transition-shadow"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9 w-[130px] text-sm">
+                <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statuses.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -123,21 +161,29 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentDocs.map((doc, i) => (
-                <tr key={i} className="border-b border-border/30 last:border-0 hover:bg-accent/50 transition-colors">
-                  <td className="px-6 py-4 text-sm font-medium text-foreground">{doc.name}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{doc.date}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-foreground">{doc.compression}%</td>
-                  <td className="px-6 py-4">
-                    <Badge variant={doc.status === "Analyzed" ? "default" : "secondary"} className="text-xs">
-                      {doc.status}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Button variant="ghost" size="sm">View</Button>
+              {filteredDocs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-sm text-muted-foreground">
+                    No documents match your search
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredDocs.map((doc, i) => (
+                  <tr key={i} className="border-b border-border/30 last:border-0 hover:bg-accent/50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-medium text-foreground">{doc.name}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{doc.date}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-foreground">{doc.compression}%</td>
+                    <td className="px-6 py-4">
+                      <Badge variant={doc.status === "Analyzed" ? "default" : "secondary"} className="text-xs">
+                        {doc.status}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Button variant="ghost" size="sm">View</Button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

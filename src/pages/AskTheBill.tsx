@@ -1,68 +1,147 @@
 import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Bot, User, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useDocuments } from "@/hooks/useDocuments";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Message {
-  role: "user" | "ai";
+  role: "user" | "assistant";
   content: string;
-  clause?: string;
 }
 
 const suggestedQuestions = [
-  "How does this bill affect small businesses?",
-  "What are the penalties mentioned?",
-  "When does the law take effect?",
-  "What data rights do citizens get?",
+  "What are the key provisions of this bill?",
+  "What penalties are mentioned?",
+  "Who are the main stakeholders affected?",
+  "What is the timeline for implementation?",
 ];
 
-const aiResponses: Record<string, { answer: string; clause: string }> = {
-  "How does this bill affect small businesses?": {
-    answer: "The bill provides simplified compliance mechanisms for MSMEs. Small businesses with turnover below ₹20 crore will have reduced reporting obligations and an extended compliance timeline until Q3 2027. However, they must still obtain valid consent before processing personal data.",
-    clause: "Chapter IV, Section 17(2)",
-  },
-  "What are the penalties mentioned?": {
-    answer: "The bill outlines significant penalties: up to ₹250 Crore for data breaches due to negligence, ₹200 Crore for violations involving children's data, ₹150 Crore for failure to notify breaches, and ₹50 Crore for other non-compliance.",
-    clause: "Chapter VI, Schedule I",
-  },
-  "When does the law take effect?": {
-    answer: "The bill is expected to receive Presidential assent in Q3 2026. Large enterprises must comply by Q1 2027, while MSMEs have an extended deadline until Q3 2027.",
-    clause: "Chapter VIII, Section 44",
-  },
-  default: {
-    answer: "Based on my analysis of the Digital Personal Data Protection Bill 2026, this provision establishes a framework for data processing that balances individual rights with business needs. The bill creates a consent-based system with specific exemptions for government functions and research purposes.",
-    clause: "General Analysis",
-  },
-};
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-with-bill`;
 
 export default function AskTheBill() {
+  const [searchParams] = useSearchParams();
+  const [selectedDocId, setSelectedDocId] = useState(searchParams.get("docId") || "");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [typing, setTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { data: documents } = useDocuments();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, typing]);
+  }, [messages, isLoading]);
 
-  const sendMessage = (text: string) => {
-    if (!text.trim()) return;
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || isLoading) return;
+
+    const userMsg: Message = { role: "user", content: text };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    setTyping(true);
+    setIsLoading(true);
 
-    const response = aiResponses[text] || aiResponses.default;
-    setTimeout(() => {
-      setTyping(false);
-      setMessages((prev) => [...prev, { role: "ai", content: response.answer, clause: response.clause }]);
-    }, 1500);
+    let assistantSoFar = "";
+
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })),
+          documentId: selectedDocId || undefined,
+        }),
+      });
+
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error || `Request failed (${resp.status})`);
+      }
+
+      if (!resp.body) throw new Error("No response body");
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+
+      const upsertAssistant = (chunk: string) => {
+        assistantSoFar += chunk;
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant") {
+            return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
+          }
+          return [...prev, { role: "assistant", content: assistantSoFar }];
+        });
+      };
+
+      let streamDone = false;
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") { streamDone = true; break; }
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) upsertAssistant(content);
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to get response");
+      if (!assistantSoFar) {
+        setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I encountered an error. Please try again." }]);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const analyzedDocs = documents?.filter((d) => d.status === "analyzed") || [];
 
   return (
     <div className="page-container flex flex-col h-[calc(100vh-3.5rem)] md:h-screen !pb-0">
       <div className="page-header shrink-0">
-        <h1 className="page-title">Ask the Bill</h1>
-        <p className="page-subtitle">Chat with AI about the Digital Personal Data Protection Bill</p>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="page-title">Ask the Bill</h1>
+            <p className="page-subtitle">Chat with AI about your uploaded documents</p>
+          </div>
+          {analyzedDocs.length > 0 && (
+            <Select value={selectedDocId} onValueChange={setSelectedDocId}>
+              <SelectTrigger className="w-[250px]">
+                <SelectValue placeholder="Select document context" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">General (no document)</SelectItem>
+                {analyzedDocs.map((doc) => (
+                  <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-4 pb-4 min-h-0">
@@ -72,9 +151,9 @@ export default function AskTheBill() {
               <Sparkles className="h-8 w-8 text-primary-foreground" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">Ask anything about the bill</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Ask anything about legislation</h3>
               <p className="text-sm text-muted-foreground max-w-md">
-                Get AI-powered answers with clause-level references
+                {selectedDocId ? "Ask questions about your selected document" : "Select a document above or ask general questions"}
               </p>
             </div>
             <div className="grid sm:grid-cols-2 gap-2 max-w-lg w-full">
@@ -90,22 +169,17 @@ export default function AskTheBill() {
         <AnimatePresence>
           {messages.map((msg, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
-              {msg.role === "ai" && (
+              {msg.role === "assistant" && (
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-primary">
                   <Bot className="h-4 w-4 text-primary-foreground" />
                 </div>
               )}
-              <div className={`max-w-[75%] space-y-2 ${msg.role === "user" ? "order-first" : ""}`}>
-                <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+              <div className={`max-w-[75%] ${msg.role === "user" ? "order-first" : ""}`}>
+                <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
                   msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "glass-card rounded-bl-md"
                 }`}>
                   {msg.content}
                 </div>
-                {msg.clause && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    📎 Reference: {msg.clause}
-                  </p>
-                )}
               </div>
               {msg.role === "user" && (
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary">
@@ -116,7 +190,7 @@ export default function AskTheBill() {
           ))}
         </AnimatePresence>
 
-        {typing && (
+        {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-primary">
               <Bot className="h-4 w-4 text-primary-foreground" />
@@ -138,11 +212,12 @@ export default function AskTheBill() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
-            placeholder="Ask a question about the bill..."
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
+            placeholder="Ask a question..."
             className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            disabled={isLoading}
           />
-          <Button size="icon" onClick={() => sendMessage(input)} disabled={!input.trim()} className="gradient-primary text-primary-foreground shrink-0">
+          <Button size="icon" onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading} className="gradient-primary text-primary-foreground shrink-0">
             <Send className="h-4 w-4" />
           </Button>
         </div>

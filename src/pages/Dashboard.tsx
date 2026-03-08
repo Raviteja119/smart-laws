@@ -36,6 +36,8 @@ const recentDocs = [
   { name: "National Education Policy Draft", date: "2026-02-25", compression: 75, status: "Analyzed" },
 ];
 
+const statuses = ["All", "Analyzed", "Processing"] as const;
+
 const container = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.08 } },

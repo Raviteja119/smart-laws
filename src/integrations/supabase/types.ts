@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      documents: {
+        Row: {
+          analysis: Json | null
+          compression_rate: number | null
+          created_at: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          name: string
+          status: string
+          token_count: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis?: Json | null
+          compression_rate?: number | null
+          created_at?: string
+          file_path: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          name: string
+          status?: string
+          token_count?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis?: Json | null
+          compression_rate?: number | null
+          created_at?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          name?: string
+          status?: string
+          token_count?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

@@ -24,7 +24,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-with-bi
 
 export default function AskTheBill() {
   const [searchParams] = useSearchParams();
-  const [selectedDocId, setSelectedDocId] = useState(searchParams.get("docId") || "");
+  const [selectedDocId, setSelectedDocId] = useState(searchParams.get("docId") || "__general__");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);

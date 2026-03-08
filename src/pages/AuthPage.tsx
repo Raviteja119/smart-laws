@@ -109,7 +109,7 @@ export default function AuthPage({ mode }: { mode: "login" | "signup" }) {
       <motion.div 
         initial={{ opacity: 0, y: 30 }} 
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
         className="w-full max-w-md relative"
       >
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8 group">

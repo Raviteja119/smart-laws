@@ -1,12 +1,14 @@
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { StatCard } from "@/components/StatCard";
-import { FileText, Zap, FolderOpen, Leaf } from "lucide-react";
+import { FileText, Zap, FolderOpen, Leaf, Search, Filter } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const tokenData = [
   { month: "Jan", original: 120000, compressed: 35000 },

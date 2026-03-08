@@ -125,7 +125,7 @@ export default function LandingPage() {
             transition={{ delay: 0.3, duration: 0.5 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-3"
           >
-            <Link to="/dashboard">
+            <Link to="/signup">
               <Button size="lg" className="gradient-primary text-primary-foreground hover:opacity-90 transition-opacity px-8 h-12 text-base">
                 Get Started Free
                 <ArrowRight className="ml-2 h-5 w-5" />

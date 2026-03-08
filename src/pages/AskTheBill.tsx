@@ -24,7 +24,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-with-bi
 
 export default function AskTheBill() {
   const [searchParams] = useSearchParams();
-  const [selectedDocId, setSelectedDocId] = useState(searchParams.get("docId") || "");
+  const [selectedDocId, setSelectedDocId] = useState(searchParams.get("docId") || "__general__");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +57,7 @@ export default function AskTheBill() {
         },
         body: JSON.stringify({
           messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })),
-          documentId: selectedDocId || undefined,
+          documentId: selectedDocId === "__general__" ? undefined : selectedDocId,
         }),
       });
 
@@ -136,7 +136,7 @@ export default function AskTheBill() {
                 <SelectValue placeholder="Select document context" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">General (no document)</SelectItem>
+                <SelectItem value="__general__">General (no document)</SelectItem>
                 {analyzedDocs.map((doc) => (
                   <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
                 ))}
@@ -155,7 +155,7 @@ export default function AskTheBill() {
             <div>
               <h3 className="text-lg font-semibold text-foreground mb-2">Ask anything about legislation</h3>
               <p className="text-sm text-muted-foreground max-w-md">
-                {selectedDocId ? "Ask questions about your selected document" : "Select a document above or ask general questions"}
+                {selectedDocId !== "__general__" ? "Ask questions about your selected document" : "Select a document above or ask general questions"}
               </p>
             </div>
             <div className="grid sm:grid-cols-2 gap-2 max-w-lg w-full">

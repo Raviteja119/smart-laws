@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, FileText, CheckCircle, X, Loader2, AlertCircle } from "lucide-react";
+import { Upload, FileText, CheckCircle, X, Loader2, AlertCircle, Sparkles, CloudUpload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useUploadDocument } from "@/hooks/useDocuments";
@@ -36,8 +36,8 @@ export default function UploadBill() {
     try {
       const doc = await uploadMutation.mutateAsync(selectedFile);
       navigate(`/analysis?id=${doc.id}`);
-    } catch (e: any) {
-      // error handled by mutation
+    } catch {
+      // handled by mutation
     }
   };
 
@@ -62,49 +62,70 @@ export default function UploadBill() {
           onChange={handleFileSelect}
           className="hidden"
         />
-        <div
+        <motion.div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => !uploadMutation.isPending && fileInputRef.current?.click()}
-          className={`glass-card p-12 text-center cursor-pointer transition-all duration-300 border-2 border-dashed ${
-            isDragging ? "border-primary bg-primary/5 scale-[1.02]" : "border-border hover:border-primary/50"
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+          className={`glass-card-vivid p-12 text-center cursor-pointer transition-all duration-500 border-2 border-dashed relative overflow-hidden ${
+            isDragging ? "border-primary bg-primary/5 scale-[1.02] glow-primary" : "border-border/50 hover:border-primary/50"
           }`}
         >
-          <motion.div animate={isDragging ? { scale: 1.1 } : { scale: 1 }} className="mx-auto mb-6">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl gradient-primary">
-              <Upload className="h-8 w-8 text-primary-foreground" />
-            </div>
+          {/* Animated background effect */}
+          <div className="absolute inset-0 gradient-mesh pointer-events-none opacity-50" />
+          
+          <motion.div 
+            animate={isDragging ? { scale: 1.2, y: -5 } : { scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className="relative z-10 mx-auto mb-6"
+          >
+            <motion.div 
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl gradient-primary shadow-xl shadow-primary/25"
+            >
+              <CloudUpload className="h-10 w-10 text-primary-foreground" />
+            </motion.div>
           </motion.div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">
+          <h3 className="text-lg font-semibold text-foreground mb-2 font-display relative z-10">
             Upload Parliamentary Bill or Policy Document
           </h3>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-muted-foreground mb-5 relative z-10">
             Drag and drop your file here, or click to browse
           </p>
-          <div className="flex items-center justify-center gap-2">
-            {["PDF", "DOCX", "TXT"].map((fmt) => (
-              <span key={fmt} className="px-3 py-1 rounded-full bg-secondary text-xs font-medium text-secondary-foreground">
+          <div className="flex items-center justify-center gap-2 relative z-10">
+            {["PDF", "DOCX", "TXT"].map((fmt, i) => (
+              <motion.span 
+                key={fmt}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 + i * 0.1 }}
+                className="px-4 py-1.5 rounded-full bg-primary/10 text-xs font-semibold text-primary border border-primary/20"
+              >
                 {fmt}
-              </span>
+              </motion.span>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {uploadMutation.isPending && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="glass-card p-6 mt-6 space-y-4">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="glass-card-vivid p-6 mt-6 space-y-4">
               <div className="flex items-center gap-3">
-                <Loader2 className="h-5 w-5 text-primary animate-spin" />
-                <span className="text-sm font-medium text-foreground">Uploading and analyzing...</span>
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </motion.div>
+                <span className="text-sm font-medium text-foreground">AI is analyzing your document...</span>
               </div>
               <Progress value={65} className="h-2" />
-              <p className="text-xs text-muted-foreground">This may take a moment while AI analyzes your document</p>
+              <p className="text-xs text-muted-foreground">Extracting insights, stakeholders, and key provisions</p>
             </motion.div>
           )}
 
           {uploadMutation.isError && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mt-6 border-destructive/50">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mt-6 border-destructive/30">
               <div className="flex items-center gap-3">
                 <AlertCircle className="h-5 w-5 text-destructive" />
                 <span className="text-sm font-medium text-foreground">Upload failed</span>
@@ -117,25 +138,37 @@ export default function UploadBill() {
           )}
 
           {selectedFile && !uploadMutation.isPending && !uploadMutation.isSuccess && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mt-6 space-y-4">
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.98 }} 
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="glass-card-vivid p-6 mt-6 space-y-4"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                    className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 border border-primary/20"
+                  >
+                    <FileText className="h-6 w-6 text-primary" />
+                  </motion.div>
                   <div>
                     <p className="text-sm font-medium text-foreground">{selectedFile.name}</p>
                     <p className="text-xs text-muted-foreground">{formatSize(selectedFile.size)}</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setSelectedFile(null)}>
+                <Button variant="ghost" size="icon" onClick={() => setSelectedFile(null)} className="hover:bg-destructive/10 hover:text-destructive">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <Button onClick={handleUpload} className="w-full gradient-primary text-primary-foreground hover:opacity-90 transition-opacity">
-                <FileText className="mr-2 h-4 w-4" />
-                Analyze Document
-              </Button>
+              <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                <Button onClick={handleUpload} className="w-full h-11 gradient-primary text-primary-foreground hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Analyze Document with AI
+                </Button>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

@@ -1,48 +1,55 @@
-import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, Users, AlertTriangle, Calendar, List, Eye, Loader2, MessageSquare, ArrowLeft } from "lucide-react";
+import { FileText, Users, AlertTriangle, Calendar, List, Eye, Loader2, MessageSquare, Download, Upload, History } from "lucide-react";
 import { useDocument, useDocuments } from "@/hooks/useDocuments";
+import { useDocumentVersions, useCreateVersion } from "@/hooks/useDocumentVersions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const defaultTabData: Record<string, { icon: React.ElementType; items: string[] }> = {
-  overview: { icon: Eye, items: ["Upload a document to see its analysis here."] },
-  highlights: { icon: FileText, items: [] },
-  stakeholders: { icon: Users, items: [] },
-  penalties: { icon: AlertTriangle, items: [] },
-  timeline: { icon: Calendar, items: [] },
-};
-
-const tabLabels: Record<string, string> = {
-  overview: "Overview",
-  highlights: "Key Highlights",
-  stakeholders: "Stakeholders",
-  penalties: "Penalties",
-  timeline: "Timeline",
-};
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { exportAsPDF, exportAsCSV } from "@/lib/exportDocument";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function DocumentAnalysis() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const docId = searchParams.get("id");
   const { data: document, isLoading } = useDocument(docId);
   const { data: documents } = useDocuments();
+  const { data: versions } = useDocumentVersions(docId);
+  const createVersion = useCreateVersion();
   const [activeTab, setActiveTab] = useState("overview");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const analysis = document?.analysis || {};
+  const analysis = (document?.analysis as any) || {};
+
   const tabData: Record<string, { icon: React.ElementType; items: string[] }> = {
-    overview: { icon: Eye, items: analysis.overview?.length ? analysis.overview : defaultTabData.overview.items },
+    overview: { icon: Eye, items: analysis.overview?.length ? analysis.overview : [t("overview")] },
     highlights: { icon: FileText, items: analysis.highlights || [] },
     stakeholders: { icon: Users, items: analysis.stakeholders || [] },
     penalties: { icon: AlertTriangle, items: analysis.penalties || [] },
     timeline: { icon: Calendar, items: analysis.timeline || [] },
   };
 
-  const clauses = analysis.clauses || [];
+  const tabLabels: Record<string, string> = {
+    overview: t("overview"),
+    highlights: t("highlights"),
+    stakeholders: t("stakeholders"),
+    penalties: t("penalties"),
+    timeline: t("timeline"),
+  };
+
+  const handleVersionUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && docId) {
+      createVersion.mutate({ documentId: docId, file });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -59,9 +66,9 @@ export default function DocumentAnalysis() {
       <div className="page-header">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="page-title">Document Analysis</h1>
+            <h1 className="page-title">{t("document_analysis")}</h1>
             <p className="page-subtitle">
-              {document ? document.name : "Select a document to view its analysis"}
+              {document ? document.name : t("select_document")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -71,22 +78,77 @@ export default function DocumentAnalysis() {
                 onValueChange={(val) => navigate(`/analysis?id=${val}`)}
               >
                 <SelectTrigger className="w-[280px]">
-                  <SelectValue placeholder="Select a document" />
+                  <SelectValue placeholder={t("select_document")} />
                 </SelectTrigger>
                 <SelectContent>
                   {documents.filter(d => d.status === "analyzed").map((doc) => (
-                    <SelectItem key={doc.id} value={doc.id}>
-                      {doc.name}
-                    </SelectItem>
+                    <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             )}
-            {document && (
-              <Button variant="outline" size="sm" onClick={() => navigate(`/chat?docId=${document.id}`)}>
-                <MessageSquare className="h-4 w-4 mr-1" />
-                Ask AI
-              </Button>
+            {document && document.status === "analyzed" && (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-1" />
+                      Export
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => exportAsPDF(document)}>
+                      {t("export_pdf")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportAsCSV(document)}>
+                      {t("export_csv")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <History className="h-4 w-4 mr-1" />
+                      {t("document_history")}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{t("document_history")}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <input ref={fileInputRef} type="file" className="hidden" onChange={handleVersionUpload} accept=".pdf,.doc,.docx,.txt" />
+                        <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={createVersion.isPending}>
+                          <Upload className="h-4 w-4 mr-1" />
+                          Upload New Version
+                        </Button>
+                      </div>
+                      {(!versions || versions.length === 0) ? (
+                        <p className="text-sm text-muted-foreground">{t("no_versions")}</p>
+                      ) : (
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {versions.map((v) => (
+                            <div key={v.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                              <div>
+                                <p className="text-sm font-medium text-foreground">{t("version")} {v.version_number}</p>
+                                <p className="text-xs text-muted-foreground">{new Date(v.created_at).toLocaleDateString()}</p>
+                              </div>
+                              <Badge variant="secondary">{(v.file_size / 1024).toFixed(0)} KB</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Button variant="outline" size="sm" onClick={() => navigate(`/chat?docId=${document.id}`)}>
+                  <MessageSquare className="h-4 w-4 mr-1" />
+                  Ask AI
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -96,11 +158,9 @@ export default function DocumentAnalysis() {
         <div className="glass-card p-12 text-center">
           <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">No document selected</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Upload a document first, or select one from the dropdown above.
-          </p>
+          <p className="text-sm text-muted-foreground mb-4">Upload a document first, or select one from the dropdown above.</p>
           <Button onClick={() => navigate("/upload")} className="gradient-primary text-primary-foreground">
-            Upload Document
+            {t("upload_bill")}
           </Button>
         </div>
       ) : document.status === "processing" ? (
@@ -113,7 +173,7 @@ export default function DocumentAnalysis() {
         <>
           {analysis.summary && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-4">
-              <h3 className="section-title mb-2">Summary</h3>
+              <h3 className="section-title mb-2">{t("summary")}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{analysis.summary}</p>
               <div className="flex gap-4 mt-4">
                 {document.token_count && (
@@ -163,14 +223,14 @@ export default function DocumentAnalysis() {
             </AnimatePresence>
           </Tabs>
 
-          {clauses.length > 0 && (
+          {(analysis.clauses || []).length > 0 && (
             <div>
               <h3 className="section-title mb-4 flex items-center gap-2">
                 <List className="h-5 w-5 text-primary" />
                 Full Clause Breakdown
               </h3>
               <Accordion type="single" collapsible className="space-y-2">
-                {clauses.map((clause: any) => (
+                {analysis.clauses.map((clause: any) => (
                   <AccordionItem key={clause.id} value={clause.id} className="glass-card border-0 px-4 rounded-xl overflow-hidden">
                     <AccordionTrigger className="text-sm font-medium text-foreground hover:no-underline py-4">
                       <div className="flex items-center gap-3">

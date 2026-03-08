@@ -1,0 +1,203 @@
+import { createContext, useContext, useState, ReactNode } from "react";
+
+type Lang = "en" | "hi" | "te" | "ta";
+
+const translations: Record<Lang, Record<string, string>> = {
+  en: {
+    dashboard: "Dashboard",
+    upload_bill: "Upload Bill",
+    document_analysis: "Document Analysis",
+    ask_the_bill: "Ask the Bill",
+    bill_comparison: "Bill Comparison",
+    token_efficiency: "Token Efficiency",
+    settings: "Settings",
+    upload: "Upload",
+    search: "Search documents...",
+    total_documents: "Total Documents",
+    analyzed: "Analyzed",
+    avg_compression: "Avg. Compression",
+    total_tokens: "Total Tokens",
+    your_documents: "Your Documents",
+    no_documents: "No documents found",
+    upload_first: "Upload your first document to get started",
+    view: "View",
+    delete: "Delete",
+    export_pdf: "Export PDF",
+    export_csv: "Export CSV",
+    summary: "Summary",
+    overview: "Overview",
+    highlights: "Key Highlights",
+    stakeholders: "Stakeholders",
+    penalties: "Penalties",
+    timeline: "Timeline",
+    language_selection: "Language Selection",
+    choose_language: "Choose your preferred language",
+    theme: "Theme",
+    light_mode: "Light Mode",
+    dark_mode: "Dark Mode",
+    sign_out: "Sign out",
+    ask_question: "Ask a question...",
+    select_document: "Select a document",
+    general: "General (no document)",
+    document_history: "Document History",
+    version: "Version",
+    no_versions: "No previous versions",
+    customize_experience: "Customize your experience",
+  },
+  hi: {
+    dashboard: "डैशबोर्ड",
+    upload_bill: "बिल अपलोड करें",
+    document_analysis: "दस्तावेज़ विश्लेषण",
+    ask_the_bill: "बिल से पूछें",
+    bill_comparison: "बिल तुलना",
+    token_efficiency: "टोकन दक्षता",
+    settings: "सेटिंग्स",
+    upload: "अपलोड",
+    search: "दस्तावेज़ खोजें...",
+    total_documents: "कुल दस्तावेज़",
+    analyzed: "विश्लेषित",
+    avg_compression: "औसत संपीड़न",
+    total_tokens: "कुल टोकन",
+    your_documents: "आपके दस्तावेज़",
+    no_documents: "कोई दस्तावेज़ नहीं मिला",
+    upload_first: "शुरू करने के लिए अपना पहला दस्तावेज़ अपलोड करें",
+    view: "देखें",
+    delete: "हटाएं",
+    export_pdf: "PDF निर्यात",
+    export_csv: "CSV निर्यात",
+    summary: "सारांश",
+    overview: "अवलोकन",
+    highlights: "मुख्य विशेषताएं",
+    stakeholders: "हितधारक",
+    penalties: "दंड",
+    timeline: "समयरेखा",
+    language_selection: "भाषा चयन",
+    choose_language: "अपनी पसंदीदा भाषा चुनें",
+    theme: "थीम",
+    light_mode: "लाइट मोड",
+    dark_mode: "डार्क मोड",
+    sign_out: "साइन आउट",
+    ask_question: "सवाल पूछें...",
+    select_document: "दस्तावेज़ चुनें",
+    general: "सामान्य (कोई दस्तावेज़ नहीं)",
+    document_history: "दस्तावेज़ इतिहास",
+    version: "संस्करण",
+    no_versions: "कोई पिछला संस्करण नहीं",
+    customize_experience: "अपना अनुभव अनुकूलित करें",
+  },
+  te: {
+    dashboard: "డాష్‌బోర్డ్",
+    upload_bill: "బిల్ అప్‌లోడ్",
+    document_analysis: "పత్ర విశ్లేషణ",
+    ask_the_bill: "బిల్‌ను అడగండి",
+    bill_comparison: "బిల్ పోలిక",
+    token_efficiency: "టోకెన్ సామర్థ్యం",
+    settings: "సెట్టింగ్‌లు",
+    upload: "అప్‌లోడ్",
+    search: "పత్రాలను వెతకండి...",
+    total_documents: "మొత్తం పత్రాలు",
+    analyzed: "విశ్లేషించబడింది",
+    avg_compression: "సగటు కుదింపు",
+    total_tokens: "మొత్తం టోకెన్‌లు",
+    your_documents: "మీ పత్రాలు",
+    no_documents: "పత్రాలు కనుగొనబడలేదు",
+    upload_first: "ప్రారంభించడానికి మీ మొదటి పత్రాన్ని అప్‌లోడ్ చేయండి",
+    view: "చూడండి",
+    delete: "తొలగించు",
+    export_pdf: "PDF ఎగుమతి",
+    export_csv: "CSV ఎగుమతి",
+    summary: "సారాంశం",
+    overview: "అవలోకనం",
+    highlights: "ముఖ్య విషయాలు",
+    stakeholders: "వాటాదారులు",
+    penalties: "జరిమానాలు",
+    timeline: "సమయ రేఖ",
+    language_selection: "భాష ఎంపిక",
+    choose_language: "మీ ఇష్టమైన భాషను ఎంచుకోండి",
+    theme: "థీమ్",
+    light_mode: "లైట్ మోడ్",
+    dark_mode: "డార్క్ మోడ్",
+    sign_out: "సైన్ అవుట్",
+    ask_question: "ప్రశ్న అడగండి...",
+    select_document: "పత్రాన్ని ఎంచుకోండి",
+    general: "సాధారణ (పత్రం లేదు)",
+    document_history: "పత్ర చరిత్ర",
+    version: "సంస్కరణ",
+    no_versions: "మునుపటి సంస్కరణలు లేవు",
+    customize_experience: "మీ అనుభవాన్ని అనుకూలీకరించండి",
+  },
+  ta: {
+    dashboard: "டாஷ்போர்டு",
+    upload_bill: "மசோதா பதிவேற்றம்",
+    document_analysis: "ஆவண பகுப்பாய்வு",
+    ask_the_bill: "மசோதாவிடம் கேளுங்கள்",
+    bill_comparison: "மசோதா ஒப்பீடு",
+    token_efficiency: "டோக்கன் திறன்",
+    settings: "அமைப்புகள்",
+    upload: "பதிவேற்றம்",
+    search: "ஆவணங்களைத் தேடுங்கள்...",
+    total_documents: "மொத்த ஆவணங்கள்",
+    analyzed: "பகுப்பாய்வு செய்யப்பட்டது",
+    avg_compression: "சராசரி சுருக்கம்",
+    total_tokens: "மொத்த டோக்கன்கள்",
+    your_documents: "உங்கள் ஆவணங்கள்",
+    no_documents: "ஆவணங்கள் கிடைக்கவில்லை",
+    upload_first: "தொடங்க உங்கள் முதல் ஆவணத்தைப் பதிவேற்றுங்கள்",
+    view: "பார்",
+    delete: "நீக்கு",
+    export_pdf: "PDF ஏற்றுமதி",
+    export_csv: "CSV ஏற்றுமதி",
+    summary: "சுருக்கம்",
+    overview: "கண்ணோட்டம்",
+    highlights: "முக்கிய அம்சங்கள்",
+    stakeholders: "பங்குதாரர்கள்",
+    penalties: "அபராதங்கள்",
+    timeline: "காலவரிசை",
+    language_selection: "மொழி தேர்வு",
+    choose_language: "உங்கள் விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும்",
+    theme: "தீம்",
+    light_mode: "லைட் மோட்",
+    dark_mode: "டார்க் மோட்",
+    sign_out: "வெளியேறு",
+    ask_question: "கேள்வி கேளுங்கள்...",
+    select_document: "ஆவணத்தைத் தேர்ந்தெடுக்கவும்",
+    general: "பொது (ஆவணம் இல்லை)",
+    document_history: "ஆவண வரலாறு",
+    version: "பதிப்பு",
+    no_versions: "முந்தைய பதிப்புகள் இல்லை",
+    customize_experience: "உங்கள் அனுபவத்தை தனிப்பயனாக்குங்கள்",
+  },
+};
+
+interface LanguageContextType {
+  lang: Lang;
+  setLang: (l: Lang) => void;
+  t: (key: string) => string;
+}
+
+const LanguageContext = createContext<LanguageContextType>({
+  lang: "en",
+  setLang: () => {},
+  t: (key) => key,
+});
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [lang, setLang] = useState<Lang>(() => {
+    return (localStorage.getItem("app-lang") as Lang) || "en";
+  });
+
+  const changeLang = (l: Lang) => {
+    setLang(l);
+    localStorage.setItem("app-lang", l);
+  };
+
+  const t = (key: string) => translations[lang]?.[key] || translations.en[key] || key;
+
+  return (
+    <LanguageContext.Provider value={{ lang, setLang: changeLang, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export const useLanguage = () => useContext(LanguageContext);

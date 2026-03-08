@@ -33,6 +33,8 @@ export default function TokenEfficiency() {
 
   return (
     <div className="page-container">
+      <div className="page-bg" />
+      <div className="page-bg-accent" />
       <div className="page-header">
         <h1 className="page-title">Token Efficiency Dashboard</h1>
         <p className="page-subtitle">Monitor compression performance and cost savings</p>

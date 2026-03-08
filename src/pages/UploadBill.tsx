@@ -49,6 +49,8 @@ export default function UploadBill() {
 
   return (
     <div className="page-container">
+      <div className="page-bg" />
+      <div className="page-bg-accent" />
       <div className="page-header">
         <h1 className="page-title">Upload Bill</h1>
         <p className="page-subtitle">Upload a parliamentary bill or policy document for AI analysis</p>

@@ -58,6 +58,8 @@ export default function Dashboard() {
 
   return (
     <div className="page-container">
+      <div className="page-bg" />
+      <div className="page-bg-accent" />
       <div className="page-header">
         <div className="flex items-center justify-between">
           <div>

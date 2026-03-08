@@ -90,6 +90,8 @@ export default function BillComparison() {
 
   return (
     <div className="page-container">
+      <div className="page-bg" />
+      <div className="page-bg-accent" />
       <div className="page-header">
         <h1 className="page-title">Bill Comparison</h1>
         <p className="page-subtitle">Upload two versions of a bill to identify changes with AI analysis</p>

@@ -122,6 +122,8 @@ export default function AskTheBill() {
 
   return (
     <div className="page-container flex flex-col h-[calc(100vh-3.5rem)] md:h-screen !pb-0">
+      <div className="page-bg" />
+      <div className="page-bg-accent" />
       <div className="page-header shrink-0">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>

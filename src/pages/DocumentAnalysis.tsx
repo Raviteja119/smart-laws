@@ -54,6 +54,8 @@ export default function DocumentAnalysis() {
 
   return (
     <div className="page-container">
+      <div className="page-bg" />
+      <div className="page-bg-accent" />
       <div className="page-header">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>

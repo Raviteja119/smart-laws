@@ -161,21 +161,29 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentDocs.map((doc, i) => (
-                <tr key={i} className="border-b border-border/30 last:border-0 hover:bg-accent/50 transition-colors">
-                  <td className="px-6 py-4 text-sm font-medium text-foreground">{doc.name}</td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">{doc.date}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-foreground">{doc.compression}%</td>
-                  <td className="px-6 py-4">
-                    <Badge variant={doc.status === "Analyzed" ? "default" : "secondary"} className="text-xs">
-                      {doc.status}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Button variant="ghost" size="sm">View</Button>
+              {filteredDocs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-sm text-muted-foreground">
+                    No documents match your search
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredDocs.map((doc, i) => (
+                  <tr key={i} className="border-b border-border/30 last:border-0 hover:bg-accent/50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-medium text-foreground">{doc.name}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{doc.date}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-foreground">{doc.compression}%</td>
+                    <td className="px-6 py-4">
+                      <Badge variant={doc.status === "Analyzed" ? "default" : "secondary"} className="text-xs">
+                        {doc.status}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Button variant="ghost" size="sm">View</Button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

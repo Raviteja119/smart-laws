@@ -17,6 +17,9 @@ import DocumentAnalysis from "@/pages/DocumentAnalysis";
 import AskTheBill from "@/pages/AskTheBill";
 import BillComparison from "@/pages/BillComparison";
 import TokenEfficiency from "@/pages/TokenEfficiency";
+import KnowledgeGraph from "@/pages/KnowledgeGraph";
+import ComplianceChecker from "@/pages/ComplianceChecker";
+import AmendmentTracker from "@/pages/AmendmentTracker";
 import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
 
@@ -43,6 +46,9 @@ const App = () => (
                 <Route path="/chat" element={<AskTheBill />} />
                 <Route path="/comparison" element={<BillComparison />} />
                 <Route path="/tokens" element={<TokenEfficiency />} />
+                <Route path="/knowledge-graph" element={<KnowledgeGraph />} />
+                <Route path="/compliance" element={<ComplianceChecker />} />
+                <Route path="/amendments" element={<AmendmentTracker />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />

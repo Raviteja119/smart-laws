@@ -155,7 +155,7 @@ export default function AskTheBill() {
             <div>
               <h3 className="text-lg font-semibold text-foreground mb-2">Ask anything about legislation</h3>
               <p className="text-sm text-muted-foreground max-w-md">
-                {selectedDocId ? "Ask questions about your selected document" : "Select a document above or ask general questions"}
+                {selectedDocId !== "__general__" ? "Ask questions about your selected document" : "Select a document above or ask general questions"}
               </p>
             </div>
             <div className="grid sm:grid-cols-2 gap-2 max-w-lg w-full">

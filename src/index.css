@@ -129,7 +129,45 @@
     @apply glass-card p-6 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1;
   }
   .page-container {
-    @apply p-6 md:p-8 max-w-7xl mx-auto space-y-6;
+    @apply p-6 md:p-8 max-w-7xl mx-auto space-y-6 relative;
+  }
+  .page-bg {
+    @apply fixed inset-0 pointer-events-none -z-10 overflow-hidden;
+  }
+  .page-bg::before {
+    content: '';
+    @apply absolute w-[600px] h-[600px] rounded-full blur-3xl opacity-30;
+    top: -10%;
+    left: -5%;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.15), transparent 70%);
+    animation: float 18s ease-in-out infinite;
+  }
+  .page-bg::after {
+    content: '';
+    @apply absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-20;
+    bottom: -5%;
+    right: -5%;
+    background: radial-gradient(circle, hsl(var(--primary-glow) / 0.12), transparent 70%);
+    animation: float 14s ease-in-out infinite reverse;
+  }
+  .page-bg-accent {
+    @apply fixed inset-0 pointer-events-none -z-10 overflow-hidden;
+  }
+  .page-bg-accent::before {
+    content: '';
+    @apply absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-25;
+    top: 5%;
+    right: 10%;
+    background: radial-gradient(circle, hsl(var(--success) / 0.12), transparent 70%);
+    animation: float 16s ease-in-out infinite;
+  }
+  .page-bg-accent::after {
+    content: '';
+    @apply absolute w-[400px] h-[400px] rounded-full blur-3xl opacity-20;
+    bottom: 10%;
+    left: 5%;
+    background: radial-gradient(circle, hsl(var(--warning) / 0.1), transparent 70%);
+    animation: float 20s ease-in-out infinite reverse;
   }
   .page-header {
     @apply space-y-1;

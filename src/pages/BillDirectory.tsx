@@ -150,13 +150,14 @@ export default function BillDirectory() {
                 <motion.div
                   key={bill.id}
                   whileHover={{ y: -2 }}
-                  className="glass-card p-4 flex flex-col gap-3"
+                  className="glass-card p-4 flex flex-col gap-3 cursor-pointer"
+                  onClick={() => setSelectedBill(bill)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-sm font-semibold text-foreground leading-tight line-clamp-2">{bill.title}</h3>
-                    <Badge className={`text-[10px] shrink-0 ${STATUS_COLORS[bill.status] || "bg-muted text-muted-foreground"}`}>
+                    <span className={`text-[10px] shrink-0 px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[bill.status] || "bg-muted text-muted-foreground"}`}>
                       {bill.status}
-                    </Badge>
+                    </span>
                   </div>
 
                   {bill.description && (
@@ -164,16 +165,16 @@ export default function BillDirectory() {
                   )}
 
                   <div className="flex flex-wrap gap-1.5 mt-auto">
-                    <Badge variant="outline" className="text-[10px]">
+                    <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">
                       <Briefcase className="h-2.5 w-2.5 mr-1" />{bill.sector}
-                    </Badge>
-                    <Badge variant="outline" className="text-[10px]">
+                    </span>
+                    <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">
                       <MapPin className="h-2.5 w-2.5 mr-1" />{bill.state}
-                    </Badge>
+                    </span>
                     {bill.ministry && (
-                      <Badge variant="outline" className="text-[10px] max-w-[180px] truncate">
+                      <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground max-w-[180px] truncate">
                         {bill.ministry}
-                      </Badge>
+                      </span>
                     )}
                   </div>
 

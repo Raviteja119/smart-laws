@@ -161,8 +161,11 @@ export type Database = {
           file_path: string
           file_size: number
           file_type: string
+          financial_year: string | null
           id: string
           name: string
+          sector: string | null
+          state: string | null
           status: string
           token_count: number | null
           updated_at: string
@@ -175,8 +178,11 @@ export type Database = {
           file_path: string
           file_size?: number
           file_type?: string
+          financial_year?: string | null
           id?: string
           name: string
+          sector?: string | null
+          state?: string | null
           status?: string
           token_count?: number | null
           updated_at?: string
@@ -189,12 +195,60 @@ export type Database = {
           file_path?: string
           file_size?: number
           file_type?: string
+          financial_year?: string | null
           id?: string
           name?: string
+          sector?: string | null
+          state?: string | null
           status?: string
           token_count?: number | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      government_bills: {
+        Row: {
+          bill_type: string | null
+          created_at: string
+          description: string | null
+          financial_year: string
+          id: string
+          introduced_date: string | null
+          ministry: string | null
+          sector: string
+          source_url: string | null
+          state: string | null
+          status: string | null
+          title: string
+        }
+        Insert: {
+          bill_type?: string | null
+          created_at?: string
+          description?: string | null
+          financial_year: string
+          id?: string
+          introduced_date?: string | null
+          ministry?: string | null
+          sector: string
+          source_url?: string | null
+          state?: string | null
+          status?: string | null
+          title: string
+        }
+        Update: {
+          bill_type?: string | null
+          created_at?: string
+          description?: string | null
+          financial_year?: string
+          id?: string
+          introduced_date?: string | null
+          ministry?: string | null
+          sector?: string
+          source_url?: string | null
+          state?: string | null
+          status?: string | null
+          title?: string
         }
         Relationships: []
       }

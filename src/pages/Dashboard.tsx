@@ -42,7 +42,7 @@ export default function Dashboard() {
       const matchesSector = sectorFilter === "All" || (doc as any).sector === sectorFilter;
       return matchesSearch && matchesStatus && matchesSector;
     });
-  }, [documents, searchQuery, statusFilter]);
+  }, [documents, searchQuery, statusFilter, sectorFilter]);
 
   const totalDocs = documents?.length || 0;
   const analyzedDocs = documents?.filter((d) => d.status === "analyzed") || [];

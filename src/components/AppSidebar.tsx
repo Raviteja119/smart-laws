@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Upload, FileText, MessageSquare, GitCompare,
   Gauge, Settings, Scale, ChevronLeft, Menu, LogOut,
-  Network, Shield, GitBranch,
+  Network, Shield, GitBranch, Library,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";

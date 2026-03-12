@@ -199,7 +199,17 @@ export default function Dashboard() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
+            <Select value={sectorFilter} onValueChange={setSectorFilter}>
+              <SelectTrigger className="h-9 w-[150px] text-sm">
+                <Briefcase className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SECTORS.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">

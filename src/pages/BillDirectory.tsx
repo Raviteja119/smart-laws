@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, MapPin, Calendar, Briefcase, ExternalLink, ChevronDown } from "lucide-react";
+import { Search, Filter, MapPin, Calendar, Briefcase, ExternalLink, ChevronDown, X, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useGovernmentBills } from "@/hooks/useGovernmentBills";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useGovernmentBills, GovernmentBill } from "@/hooks/useGovernmentBills";
 import { Loader2 } from "lucide-react";
 
 const SECTORS = [
@@ -32,6 +33,7 @@ export default function BillDirectory() {
   const [sectorFilter, setSectorFilter] = useState("All");
   const [stateFilter, setStateFilter] = useState("All");
   const [fyFilter, setFyFilter] = useState("All");
+  const [selectedBill, setSelectedBill] = useState<GovernmentBill | null>(null);
   const { data: bills, isLoading } = useGovernmentBills();
 
   const filtered = useMemo(() => {
@@ -148,13 +150,14 @@ export default function BillDirectory() {
                 <motion.div
                   key={bill.id}
                   whileHover={{ y: -2 }}
-                  className="glass-card p-4 flex flex-col gap-3"
+                  className="glass-card p-4 flex flex-col gap-3 cursor-pointer"
+                  onClick={() => setSelectedBill(bill)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-sm font-semibold text-foreground leading-tight line-clamp-2">{bill.title}</h3>
-                    <Badge className={`text-[10px] shrink-0 ${STATUS_COLORS[bill.status] || "bg-muted text-muted-foreground"}`}>
+                    <span className={`text-[10px] shrink-0 px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[bill.status] || "bg-muted text-muted-foreground"}`}>
                       {bill.status}
-                    </Badge>
+                    </span>
                   </div>
 
                   {bill.description && (
@@ -162,16 +165,16 @@ export default function BillDirectory() {
                   )}
 
                   <div className="flex flex-wrap gap-1.5 mt-auto">
-                    <Badge variant="outline" className="text-[10px]">
+                    <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">
                       <Briefcase className="h-2.5 w-2.5 mr-1" />{bill.sector}
-                    </Badge>
-                    <Badge variant="outline" className="text-[10px]">
+                    </span>
+                    <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">
                       <MapPin className="h-2.5 w-2.5 mr-1" />{bill.state}
-                    </Badge>
+                    </span>
                     {bill.ministry && (
-                      <Badge variant="outline" className="text-[10px] max-w-[180px] truncate">
+                      <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground max-w-[180px] truncate">
                         {bill.ministry}
-                      </Badge>
+                      </span>
                     )}
                   </div>
 
@@ -186,6 +189,74 @@ export default function BillDirectory() {
           </motion.div>
         ))
       )}
+      {/* Bill Detail Dialog */}
+      <Dialog open={!!selectedBill} onOpenChange={(open) => !open && setSelectedBill(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          {selectedBill && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-lg leading-snug pr-6">{selectedBill.title}</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-2">
+                <div className="flex flex-wrap gap-2">
+                  <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${STATUS_COLORS[selectedBill.status] || "bg-muted text-muted-foreground"}`}>
+                    {selectedBill.status}
+                  </span>
+                  <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground">
+                    <Briefcase className="h-3 w-3 mr-1" />{selectedBill.sector}
+                  </span>
+                  <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground">
+                    <MapPin className="h-3 w-3 mr-1" />{selectedBill.state}
+                  </span>
+                  <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground">
+                    <Calendar className="h-3 w-3 mr-1" />FY {selectedBill.financial_year}
+                  </span>
+                </div>
+
+                {selectedBill.description && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-1">Description</h4>
+                    <p className="text-sm text-muted-foreground">{selectedBill.description}</p>
+                  </div>
+                )}
+
+                {selectedBill.ministry && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-1">Ministry</h4>
+                    <p className="text-sm text-muted-foreground">{selectedBill.ministry}</p>
+                  </div>
+                )}
+
+                {selectedBill.bill_type && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-1">Bill Type</h4>
+                    <p className="text-sm text-muted-foreground">{selectedBill.bill_type}</p>
+                  </div>
+                )}
+
+                {selectedBill.introduced_date && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-1">Introduced Date</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(selectedBill.introduced_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                  </div>
+                )}
+
+                {selectedBill.source_url && (
+                  <Button variant="outline" size="sm" className="w-full" asChild>
+                    <a href={selectedBill.source_url} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                      View Source Document
+                    </a>
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

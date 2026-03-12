@@ -13,6 +13,7 @@ const translations: Record<Lang, Record<string, string>> = {
     knowledge_graph: "Knowledge Graph",
     compliance_checker: "Compliance Checker",
     amendment_tracker: "Amendment Tracker",
+    bill_directory: "Bill Directory",
     settings: "Settings",
     upload: "Upload",
     search: "Search documents...",

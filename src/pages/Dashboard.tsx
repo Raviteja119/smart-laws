@@ -29,6 +29,7 @@ const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [sectorFilter, setSectorFilter] = useState<string>("All");
   const navigate = useNavigate();
   const { data: documents, isLoading } = useDocuments();
   const deleteMutation = useDeleteDocument();

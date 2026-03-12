@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, Filter, MapPin, Calendar, Briefcase, ExternalLink, ChevronDown } from "lucide-react";
+import { Search, Filter, MapPin, Calendar, Briefcase, ExternalLink, ChevronDown, X, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useGovernmentBills } from "@/hooks/useGovernmentBills";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useGovernmentBills, GovernmentBill } from "@/hooks/useGovernmentBills";
 import { Loader2 } from "lucide-react";
 
 const SECTORS = [

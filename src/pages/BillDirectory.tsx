@@ -33,6 +33,7 @@ export default function BillDirectory() {
   const [sectorFilter, setSectorFilter] = useState("All");
   const [stateFilter, setStateFilter] = useState("All");
   const [fyFilter, setFyFilter] = useState("All");
+  const [selectedBill, setSelectedBill] = useState<GovernmentBill | null>(null);
   const { data: bills, isLoading } = useGovernmentBills();
 
   const filtered = useMemo(() => {

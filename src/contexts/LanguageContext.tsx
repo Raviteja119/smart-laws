@@ -103,6 +103,7 @@ const translations: Record<Lang, Record<string, string>> = {
     knowledge_graph: "నాలెడ్జ్ గ్రాఫ్",
     compliance_checker: "సమ్మతి తనిఖీ",
     amendment_tracker: "సవరణ ట్రాకర్",
+    bill_directory: "బిల్ డైరెక్టరీ",
     settings: "సెట్టింగ్‌లు",
     upload: "అప్‌లోడ్",
     search: "పత్రాలను వెతకండి...",

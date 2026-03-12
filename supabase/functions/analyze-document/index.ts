@@ -105,7 +105,7 @@ Return ONLY valid JSON, no markdown.`,
 
     const compressionRate = Math.min(99.9, Math.max(50, 100 - (2500 / tokenCount) * 100));
 
-    // Update document with analysis
+    // Update document with analysis (including sector, state, financial_year)
     const { error: updateError } = await supabase
       .from("documents")
       .update({
@@ -113,6 +113,9 @@ Return ONLY valid JSON, no markdown.`,
         token_count: tokenCount,
         compression_rate: parseFloat(compressionRate.toFixed(2)),
         analysis,
+        sector: analysis.sector || null,
+        state: analysis.state || null,
+        financial_year: analysis.financial_year || null,
       })
       .eq("id", documentId);
 

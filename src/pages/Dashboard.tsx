@@ -39,7 +39,8 @@ export default function Dashboard() {
     return documents.filter((doc) => {
       const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "All" || doc.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesSector = sectorFilter === "All" || (doc as any).sector === sectorFilter;
+      return matchesSearch && matchesStatus && matchesSector;
     });
   }, [documents, searchQuery, statusFilter]);
 

@@ -50,6 +50,7 @@ const App = () => (
                 <Route path="/knowledge-graph" element={<KnowledgeGraph />} />
                 <Route path="/compliance" element={<ComplianceChecker />} />
                 <Route path="/amendments" element={<AmendmentTracker />} />
+                <Route path="/bill-directory" element={<BillDirectory />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />

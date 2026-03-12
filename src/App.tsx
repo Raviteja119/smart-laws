@@ -20,6 +20,7 @@ import TokenEfficiency from "@/pages/TokenEfficiency";
 import KnowledgeGraph from "@/pages/KnowledgeGraph";
 import ComplianceChecker from "@/pages/ComplianceChecker";
 import AmendmentTracker from "@/pages/AmendmentTracker";
+import BillDirectory from "@/pages/BillDirectory";
 import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
 
@@ -49,6 +50,7 @@ const App = () => (
                 <Route path="/knowledge-graph" element={<KnowledgeGraph />} />
                 <Route path="/compliance" element={<ComplianceChecker />} />
                 <Route path="/amendments" element={<AmendmentTracker />} />
+                <Route path="/bill-directory" element={<BillDirectory />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />

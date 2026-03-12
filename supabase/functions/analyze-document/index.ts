@@ -58,7 +58,10 @@ serve(async (req) => {
   "penalties": ["penalty1", "penalty2"],
   "timeline": ["event1", "event2"],
   "clauses": [{"id": "1", "title": "Chapter title", "content": "description"}],
-  "summary": "A brief 2-sentence summary of the document."
+  "summary": "A brief 2-sentence summary of the document.",
+  "sector": "Primary sector category. Must be one of: Agriculture, Education, Energy, Environment, Finance, Food, Governance, Health, Industry, Law & Justice, Mining, Technology, Defence, Transport, Other",
+  "state": "If this is a state-specific bill, the Indian state name. Otherwise 'Central'.",
+  "financial_year": "The financial year this bill relates to, e.g. '2024-25'. Infer from dates or content."
 }
 Return ONLY valid JSON, no markdown.`,
           },
@@ -102,7 +105,7 @@ Return ONLY valid JSON, no markdown.`,
 
     const compressionRate = Math.min(99.9, Math.max(50, 100 - (2500 / tokenCount) * 100));
 
-    // Update document with analysis
+    // Update document with analysis (including sector, state, financial_year)
     const { error: updateError } = await supabase
       .from("documents")
       .update({
@@ -110,6 +113,9 @@ Return ONLY valid JSON, no markdown.`,
         token_count: tokenCount,
         compression_rate: parseFloat(compressionRate.toFixed(2)),
         analysis,
+        sector: analysis.sector || null,
+        state: analysis.state || null,
+        financial_year: analysis.financial_year || null,
       })
       .eq("id", documentId);
 

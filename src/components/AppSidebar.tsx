@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Upload, FileText, MessageSquare, GitCompare,
   Gauge, Settings, Scale, ChevronLeft, Menu, LogOut,
-  Network, Shield, GitBranch,
+  Network, Shield, GitBranch, Library,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -26,6 +26,7 @@ const mainNav = [
 
 const toolsNav = [
   { key: "bill_comparison", url: "/comparison", icon: GitCompare },
+  { key: "bill_directory", url: "/bill-directory", icon: Library },
   { key: "knowledge_graph", url: "/knowledge-graph", icon: Network },
   { key: "compliance_checker", url: "/compliance", icon: Shield },
   { key: "amendment_tracker", url: "/amendments", icon: GitBranch },

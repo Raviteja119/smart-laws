@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { StatCard } from "@/components/StatCard";
 import {
   FileText, Zap, FolderOpen, Leaf, Search, Filter, Trash2, Eye,
-  Loader2, Upload, TrendingUp, Clock, Shield, Network,
+  Loader2, Upload, TrendingUp, Clock, Shield, Network, Briefcase, MapPin, Calendar,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -17,6 +17,7 @@ import { useDocuments, useDeleteDocument } from "@/hooks/useDocuments";
 import { useState } from "react";
 
 const statuses = ["All", "analyzed", "processing"] as const;
+const SECTORS = ["All", "Agriculture", "Education", "Energy", "Environment", "Finance", "Food", "Governance", "Health", "Industry", "Law & Justice", "Mining", "Technology", "Other"];
 const COLORS = ["hsl(221, 83%, 53%)", "hsl(152, 76%, 44%)", "hsl(38, 92%, 50%)", "hsl(262, 83%, 58%)"];
 
 const container = {
@@ -28,6 +29,7 @@ const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [sectorFilter, setSectorFilter] = useState<string>("All");
   const navigate = useNavigate();
   const { data: documents, isLoading } = useDocuments();
   const deleteMutation = useDeleteDocument();
@@ -37,9 +39,10 @@ export default function Dashboard() {
     return documents.filter((doc) => {
       const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "All" || doc.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesSector = sectorFilter === "All" || (doc as any).sector === sectorFilter;
+      return matchesSearch && matchesStatus && matchesSector;
     });
-  }, [documents, searchQuery, statusFilter]);
+  }, [documents, searchQuery, statusFilter, sectorFilter]);
 
   const totalDocs = documents?.length || 0;
   const analyzedDocs = documents?.filter((d) => d.status === "analyzed") || [];
@@ -119,10 +122,10 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
+          { label: "Bill Directory", icon: Briefcase, url: "/bill-directory", color: "text-primary" },
           { label: "Knowledge Graph", icon: Network, url: "/knowledge-graph", color: "text-primary" },
           { label: "Compliance Check", icon: Shield, url: "/compliance", color: "text-success" },
           { label: "Compare Bills", icon: TrendingUp, url: "/comparison", color: "text-warning" },
-          { label: "Energy Saved", icon: Leaf, url: "/tokens", color: "text-success" },
         ].map((action) => (
           <button
             key={action.label}
@@ -193,6 +196,17 @@ export default function Dashboard() {
               <SelectContent>
                 {statuses.map((s) => (
                   <SelectItem key={s} value={s}>{s === "All" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sectorFilter} onValueChange={setSectorFilter}>
+              <SelectTrigger className="h-9 w-[150px] text-sm">
+                <Briefcase className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SECTORS.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

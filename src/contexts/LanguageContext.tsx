@@ -58,6 +58,7 @@ const translations: Record<Lang, Record<string, string>> = {
     knowledge_graph: "ज्ञान ग्राफ",
     compliance_checker: "अनुपालन जाँचकर्ता",
     amendment_tracker: "संशोधन ट्रैकर",
+    bill_directory: "विधेयक निर्देशिका",
     settings: "सेटिंग्स",
     upload: "अपलोड",
     search: "दस्तावेज़ खोजें...",

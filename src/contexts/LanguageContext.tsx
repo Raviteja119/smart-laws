@@ -148,6 +148,7 @@ const translations: Record<Lang, Record<string, string>> = {
     knowledge_graph: "அறிவு வரைபடம்",
     compliance_checker: "இணக்கச் சரிபார்ப்பு",
     amendment_tracker: "திருத்தம் கண்காணிப்பான்",
+    bill_directory: "மசோதா அடைவு",
     settings: "அமைப்புகள்",
     upload: "பதிவேற்றம்",
     search: "ஆவணங்களைத் தேடுங்கள்...",

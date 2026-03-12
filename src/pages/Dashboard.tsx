@@ -122,10 +122,10 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
+          { label: "Bill Directory", icon: Briefcase, url: "/bill-directory", color: "text-primary" },
           { label: "Knowledge Graph", icon: Network, url: "/knowledge-graph", color: "text-primary" },
           { label: "Compliance Check", icon: Shield, url: "/compliance", color: "text-success" },
           { label: "Compare Bills", icon: TrendingUp, url: "/comparison", color: "text-warning" },
-          { label: "Energy Saved", icon: Leaf, url: "/tokens", color: "text-success" },
         ].map((action) => (
           <button
             key={action.label}

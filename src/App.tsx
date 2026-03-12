@@ -20,6 +20,7 @@ import TokenEfficiency from "@/pages/TokenEfficiency";
 import KnowledgeGraph from "@/pages/KnowledgeGraph";
 import ComplianceChecker from "@/pages/ComplianceChecker";
 import AmendmentTracker from "@/pages/AmendmentTracker";
+import BillDirectory from "@/pages/BillDirectory";
 import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
 

@@ -19,12 +19,12 @@ export function useNotifications() {
     queryKey: ["notifications", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("notifications" as any)
+        .from("notifications")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data || []) as unknown as Notification[];
+      return (data || []) as Notification[];
     },
     enabled: !!user,
     refetchInterval: 30000,

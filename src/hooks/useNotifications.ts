@@ -35,7 +35,7 @@ export function useMarkAsRead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("notifications" as any).update({ read: true } as any).eq("id", id);
+      const { error } = await supabase.from("notifications").update({ read: true }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),

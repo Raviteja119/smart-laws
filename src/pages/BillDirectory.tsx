@@ -4,7 +4,7 @@ import { Search, Filter, MapPin, Calendar, Briefcase, ExternalLink, ChevronDown,
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useGovernmentBills, GovernmentBill } from "@/hooks/useGovernmentBills";
 import { Loader2 } from "lucide-react";
 
@@ -196,6 +196,7 @@ export default function BillDirectory() {
             <>
               <DialogHeader>
                 <DialogTitle className="text-lg leading-snug pr-6">{selectedBill.title}</DialogTitle>
+                <DialogDescription className="sr-only">Details for {selectedBill.title}</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 mt-2">

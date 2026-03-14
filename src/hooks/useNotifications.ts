@@ -19,12 +19,12 @@ export function useNotifications() {
     queryKey: ["notifications", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("notifications" as any)
+        .from("notifications")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data || []) as unknown as Notification[];
+      return (data || []) as Notification[];
     },
     enabled: !!user,
     refetchInterval: 30000,
@@ -35,7 +35,7 @@ export function useMarkAsRead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("notifications" as any).update({ read: true } as any).eq("id", id);
+      const { error } = await supabase.from("notifications").update({ read: true }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
@@ -48,7 +48,7 @@ export function useMarkAllRead() {
   return useMutation({
     mutationFn: async () => {
       if (!user) return;
-      const { error } = await supabase.from("notifications" as any).update({ read: true } as any).eq("user_id", user.id).eq("read", false);
+      const { error } = await supabase.from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),

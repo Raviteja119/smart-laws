@@ -196,6 +196,7 @@ export default function BillDirectory() {
             <>
               <DialogHeader>
                 <DialogTitle className="text-lg leading-snug pr-6">{selectedBill.title}</DialogTitle>
+                <DialogDescription className="sr-only">Details for {selectedBill.title}</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 mt-2">

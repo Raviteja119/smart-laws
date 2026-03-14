@@ -21,11 +21,11 @@ export function useGovernmentBills() {
     queryKey: ["government-bills"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("government_bills" as any)
+        .from("government_bills")
         .select("*")
         .order("introduced_date", { ascending: false });
       if (error) throw error;
-      return (data || []) as unknown as GovernmentBill[];
+      return (data || []) as GovernmentBill[];
     },
   });
 }

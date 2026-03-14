@@ -48,7 +48,7 @@ export function useMarkAllRead() {
   return useMutation({
     mutationFn: async () => {
       if (!user) return;
-      const { error } = await supabase.from("notifications" as any).update({ read: true } as any).eq("user_id", user.id).eq("read", false);
+      const { error } = await supabase.from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),

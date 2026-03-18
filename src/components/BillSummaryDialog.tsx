@@ -25,6 +25,29 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [hasSummarized, setHasSummarized] = useState(false);
 
+  const handleExportPDF = useCallback(() => {
+    if (!bill || !summary) return;
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(bill.title, 15, 20, { maxWidth: 180 });
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Sector: ${bill.sector} | State: ${bill.state} | FY: ${bill.financial_year} | Status: ${bill.status}`, 15, 35);
+    doc.setDrawColor(200);
+    doc.line(15, 38, 195, 38);
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    const lines = doc.splitTextToSize(summary, 175);
+    let y = 45;
+    for (const line of lines) {
+      if (y > 275) { doc.addPage(); y = 20; }
+      doc.text(line, 15, y);
+      y += 6;
+    }
+    doc.save(`${bill.title.slice(0, 50).replace(/[^a-zA-Z0-9]/g, "_")}_summary.pdf`);
+    toast({ title: "PDF downloaded", description: "Summary exported successfully" });
+  }, [bill, summary]);
+
   const handleSummarize = useCallback(async () => {
     if (!bill) return;
     setIsSummarizing(true);

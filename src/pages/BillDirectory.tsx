@@ -189,75 +189,12 @@ export default function BillDirectory() {
           </motion.div>
         ))
       )}
-      {/* Bill Detail Dialog */}
-      <Dialog open={!!selectedBill} onOpenChange={(open) => !open && setSelectedBill(null)}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-          {selectedBill && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-lg leading-snug pr-6">{selectedBill.title}</DialogTitle>
-                <DialogDescription className="sr-only">Details for {selectedBill.title}</DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4 mt-2">
-                <div className="flex flex-wrap gap-2">
-                  <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${STATUS_COLORS[selectedBill.status] || "bg-muted text-muted-foreground"}`}>
-                    {selectedBill.status}
-                  </span>
-                  <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground">
-                    <Briefcase className="h-3 w-3 mr-1" />{selectedBill.sector}
-                  </span>
-                  <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground">
-                    <MapPin className="h-3 w-3 mr-1" />{selectedBill.state}
-                  </span>
-                  <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground">
-                    <Calendar className="h-3 w-3 mr-1" />FY {selectedBill.financial_year}
-                  </span>
-                </div>
-
-                {selectedBill.description && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground mb-1">Description</h4>
-                    <p className="text-sm text-muted-foreground">{selectedBill.description}</p>
-                  </div>
-                )}
-
-                {selectedBill.ministry && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground mb-1">Ministry</h4>
-                    <p className="text-sm text-muted-foreground">{selectedBill.ministry}</p>
-                  </div>
-                )}
-
-                {selectedBill.bill_type && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground mb-1">Bill Type</h4>
-                    <p className="text-sm text-muted-foreground">{selectedBill.bill_type}</p>
-                  </div>
-                )}
-
-                {selectedBill.introduced_date && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-foreground mb-1">Introduced Date</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(selectedBill.introduced_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
-                    </p>
-                  </div>
-                )}
-
-                {selectedBill.source_url && (
-                  <Button variant="outline" size="sm" className="w-full" asChild>
-                    <a href={selectedBill.source_url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-3.5 w-3.5 mr-2" />
-                      View Source Document
-                    </a>
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Bill Detail & Summary Dialog */}
+      <BillSummaryDialog
+        bill={selectedBill}
+        open={!!selectedBill}
+        onOpenChange={(open) => !open && setSelectedBill(null)}
+      />
     </div>
   );
 }

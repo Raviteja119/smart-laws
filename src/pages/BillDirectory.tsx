@@ -4,8 +4,8 @@ import { Search, Filter, MapPin, Calendar, Briefcase, ExternalLink, ChevronDown,
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useGovernmentBills, GovernmentBill } from "@/hooks/useGovernmentBills";
+import { BillSummaryDialog } from "@/components/BillSummaryDialog";
 import { Loader2 } from "lucide-react";
 
 const SECTORS = [

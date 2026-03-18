@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { OnboardingTour } from "@/components/OnboardingTour";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { StatCard } from "@/components/StatCard";

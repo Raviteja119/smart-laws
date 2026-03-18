@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { OnboardingTour } from "@/components/OnboardingTour";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { StatCard } from "@/components/StatCard";
@@ -89,6 +90,7 @@ export default function Dashboard() {
 
   return (
     <div className="page-container">
+      <OnboardingTour />
       <div className="page-bg" />
       <div className="page-bg-accent" />
       <div className="page-header">

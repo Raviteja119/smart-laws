@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Sparkles, BookOpen, ExternalLink, Briefcase, MapPin, Calendar } from "lucide-react";
+import { Loader2, Sparkles, BookOpen, ExternalLink, Briefcase, MapPin, Calendar, Download } from "lucide-react";
 import { GovernmentBill } from "@/hooks/useGovernmentBills";
 import { toast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
 
 const STATUS_COLORS: Record<string, string> = {
   Enacted: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
@@ -24,6 +24,29 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
   const [summary, setSummary] = useState("");
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [hasSummarized, setHasSummarized] = useState(false);
+
+  const handleExportPDF = useCallback(() => {
+    if (!bill || !summary) return;
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(bill.title, 15, 20, { maxWidth: 180 });
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Sector: ${bill.sector} | State: ${bill.state} | FY: ${bill.financial_year} | Status: ${bill.status}`, 15, 35);
+    doc.setDrawColor(200);
+    doc.line(15, 38, 195, 38);
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    const lines = doc.splitTextToSize(summary, 175);
+    let y = 45;
+    for (const line of lines) {
+      if (y > 275) { doc.addPage(); y = 20; }
+      doc.text(line, 15, y);
+      y += 6;
+    }
+    doc.save(`${bill.title.slice(0, 50).replace(/[^a-zA-Z0-9]/g, "_")}_summary.pdf`);
+    toast({ title: "PDF downloaded", description: "Summary exported successfully" });
+  }, [bill, summary]);
 
   const handleSummarize = useCallback(async () => {
     if (!bill) return;
@@ -142,7 +165,7 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
         )}
 
         {/* Action buttons */}
-        <div className="flex gap-2 mb-3">
+        <div className="flex flex-wrap gap-2 mb-3">
           <Button
             onClick={handleSummarize}
             disabled={isSummarizing}
@@ -156,6 +179,13 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
             )}
             {isSummarizing ? "Summarizing..." : hasSummarized ? "Re-summarize" : "Summarize Bill"}
           </Button>
+
+          {hasSummarized && summary && !isSummarizing && (
+            <Button variant="outline" size="sm" onClick={() => handleExportPDF()} className="gap-1">
+              <Download className="h-3.5 w-3.5" />
+              Export PDF
+            </Button>
+          )}
 
           {bill.source_url && (
             <Button variant="outline" size="sm" asChild>

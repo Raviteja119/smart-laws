@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Sparkles, BookOpen, ExternalLink, Briefcase, MapPin, Calendar } from "lucide-react";
+import { Loader2, Sparkles, BookOpen, ExternalLink, Briefcase, MapPin, Calendar, Download } from "lucide-react";
 import { GovernmentBill } from "@/hooks/useGovernmentBills";
 import { toast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
 
 const STATUS_COLORS: Record<string, string> = {
   Enacted: "bg-emerald-500/10 text-emerald-600 border-emerald-200",

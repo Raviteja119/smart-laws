@@ -90,6 +90,7 @@ export default function Dashboard() {
 
   return (
     <div className="page-container">
+      <OnboardingTour />
       <div className="page-bg" />
       <div className="page-bg-accent" />
       <div className="page-header">

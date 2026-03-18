@@ -142,7 +142,7 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
         )}
 
         {/* Action buttons */}
-        <div className="flex gap-2 mb-3">
+        <div className="flex flex-wrap gap-2 mb-3">
           <Button
             onClick={handleSummarize}
             disabled={isSummarizing}
@@ -156,6 +156,13 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
             )}
             {isSummarizing ? "Summarizing..." : hasSummarized ? "Re-summarize" : "Summarize Bill"}
           </Button>
+
+          {hasSummarized && summary && !isSummarizing && (
+            <Button variant="outline" size="sm" onClick={() => handleExportPDF()} className="gap-1">
+              <Download className="h-3.5 w-3.5" />
+              Export PDF
+            </Button>
+          )}
 
           {bill.source_url && (
             <Button variant="outline" size="sm" asChild>

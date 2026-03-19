@@ -1,11 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { StatCard } from "@/components/StatCard";
 import {
-  FileText, Zap, FolderOpen, Leaf, Search, Filter, Trash2, Eye,
-  Loader2, Upload, TrendingUp, Clock, Shield, Network, Briefcase, MapPin, Calendar,
+  FileText, Zap, FolderOpen, Search, Filter, Trash2, Eye,
+  Loader2, Upload, TrendingUp, Clock, Shield, Network, Briefcase, Globe,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDocuments, useDeleteDocument } from "@/hooks/useDocuments";
-import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const statuses = ["All", "analyzed", "processing"] as const;
 const SECTORS = ["All", "Agriculture", "Education", "Energy", "Environment", "Finance", "Food", "Governance", "Health", "Industry", "Law & Justice", "Mining", "Technology", "Other"];
@@ -34,6 +34,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { data: documents, isLoading } = useDocuments();
   const deleteMutation = useDeleteDocument();
+  const { lang, setLang, t } = useLanguage();
 
   const filteredDocs = useMemo(() => {
     if (!documents) return [];
@@ -94,14 +95,31 @@ export default function Dashboard() {
       <div className="page-bg" />
       <div className="page-bg-accent" />
       <div className="page-header">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="page-title">Dashboard</h1>
+            <h1 className="page-title">{t("dashboard")}</h1>
             <p className="page-subtitle">Overview of your legislative analysis activity</p>
           </div>
-          <Button onClick={() => navigate("/upload")} className="gradient-primary text-primary-foreground">
-            <Upload className="h-4 w-4 mr-2" />Upload Bill
-          </Button>
+          <div className="flex items-center gap-3">
+            {/* Highlighted Language Switcher */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-primary/30 bg-primary/5 shadow-sm">
+              <Globe className="h-4 w-4 text-primary" />
+              <Select value={lang} onValueChange={(v) => setLang(v as any)}>
+                <SelectTrigger className="h-8 w-[130px] text-xs border-none bg-transparent shadow-none focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">🇬🇧 English</SelectItem>
+                  <SelectItem value="hi">🇮🇳 हिन्दी</SelectItem>
+                  <SelectItem value="te">🇮🇳 తెలుగు</SelectItem>
+                  <SelectItem value="ta">🇮🇳 தமிழ்</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={() => navigate("/upload")} className="gradient-primary text-primary-foreground">
+              <Upload className="h-4 w-4 mr-2" />{t("upload_bill")}
+            </Button>
+          </div>
         </div>
       </div>
 

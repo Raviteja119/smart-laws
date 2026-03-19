@@ -1,11 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { StatCard } from "@/components/StatCard";
 import {
-  FileText, Zap, FolderOpen, Leaf, Search, Filter, Trash2, Eye,
-  Loader2, Upload, TrendingUp, Clock, Shield, Network, Briefcase, MapPin, Calendar,
+  FileText, Zap, FolderOpen, Search, Filter, Trash2, Eye,
+  Loader2, Upload, TrendingUp, Clock, Shield, Network, Briefcase, Globe,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDocuments, useDeleteDocument } from "@/hooks/useDocuments";
-import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const statuses = ["All", "analyzed", "processing"] as const;
 const SECTORS = ["All", "Agriculture", "Education", "Energy", "Environment", "Finance", "Food", "Governance", "Health", "Industry", "Law & Justice", "Mining", "Technology", "Other"];

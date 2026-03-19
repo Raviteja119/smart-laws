@@ -2,9 +2,11 @@ import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Sparkles, BookOpen, ExternalLink, Briefcase, MapPin, Calendar, Download } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Sparkles, BookOpen, ExternalLink, Briefcase, MapPin, Calendar, Download, Globe, Volume2, VolumeX } from "lucide-react";
 import { GovernmentBill } from "@/hooks/useGovernmentBills";
 import { toast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import jsPDF from "jspdf";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -12,6 +14,20 @@ const STATUS_COLORS: Record<string, string> = {
   Passed: "bg-blue-500/10 text-blue-600 border-blue-200",
   "Under Review": "bg-amber-500/10 text-amber-600 border-amber-200",
   Introduced: "bg-purple-500/10 text-purple-600 border-purple-200",
+};
+
+const SUMMARY_LANGUAGES = [
+  { value: "en", label: "English", flag: "🇬🇧" },
+  { value: "hi", label: "हिन्दी (Hindi)", flag: "🇮🇳" },
+  { value: "te", label: "తెలుగు (Telugu)", flag: "🇮🇳" },
+  { value: "ta", label: "தமிழ் (Tamil)", flag: "🇮🇳" },
+];
+
+const SPEECH_LANG_MAP: Record<string, string> = {
+  en: "en-IN",
+  hi: "hi-IN",
+  te: "te-IN",
+  ta: "ta-IN",
 };
 
 interface BillSummaryDialogProps {
@@ -24,6 +40,9 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
   const [summary, setSummary] = useState("");
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [hasSummarized, setHasSummarized] = useState(false);
+  const [summaryLang, setSummaryLang] = useState("en");
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const { lang } = useLanguage();
 
   const handleExportPDF = useCallback(() => {
     if (!bill || !summary) return;
@@ -48,8 +67,9 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
     toast({ title: "PDF downloaded", description: "Summary exported successfully" });
   }, [bill, summary]);
 
-  const handleSummarize = useCallback(async () => {
+  const handleSummarize = useCallback(async (targetLang?: string) => {
     if (!bill) return;
+    const langToUse = targetLang || summaryLang;
     setIsSummarizing(true);
     setSummary("");
     setHasSummarized(true);
@@ -63,7 +83,7 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ bill }),
+          body: JSON.stringify({ bill, language: langToUse }),
         }
       );
 
@@ -114,13 +134,46 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
     } finally {
       setIsSummarizing(false);
     }
-  }, [bill]);
+  }, [bill, summaryLang]);
+
+  const handleLanguageChange = (newLang: string) => {
+    setSummaryLang(newLang);
+    if (hasSummarized && !isSummarizing) {
+      handleSummarize(newLang);
+    }
+  };
+
+  const handleSpeak = useCallback(() => {
+    if (!summary) return;
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(summary);
+    utterance.lang = SPEECH_LANG_MAP[summaryLang] || "en-IN";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      toast({ title: "Audio Error", description: "Speech synthesis is not available on this device.", variant: "destructive" });
+    };
+
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  }, [summary, summaryLang, isSpeaking]);
 
   const handleClose = (isOpen: boolean) => {
     if (!isOpen) {
       setSummary("");
       setHasSummarized(false);
       setIsSummarizing(false);
+      setSummaryLang("en");
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
     }
     onOpenChange(isOpen);
   };
@@ -165,9 +218,9 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
         )}
 
         {/* Action buttons */}
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="flex flex-wrap gap-2 mb-3 items-center">
           <Button
-            onClick={handleSummarize}
+            onClick={() => handleSummarize()}
             disabled={isSummarizing}
             size="sm"
             className="gap-2"
@@ -180,11 +233,42 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
             {isSummarizing ? "Summarizing..." : hasSummarized ? "Re-summarize" : "Summarize Bill"}
           </Button>
 
+          {/* Language translator dropdown */}
+          <div className="flex items-center gap-1.5">
+            <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+            <Select value={summaryLang} onValueChange={handleLanguageChange}>
+              <SelectTrigger className="h-8 w-[160px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SUMMARY_LANGUAGES.map((l) => (
+                  <SelectItem key={l.value} value={l.value}>
+                    <span className="flex items-center gap-2">
+                      <span>{l.flag}</span>
+                      <span>{l.label}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {hasSummarized && summary && !isSummarizing && (
-            <Button variant="outline" size="sm" onClick={() => handleExportPDF()} className="gap-1">
-              <Download className="h-3.5 w-3.5" />
-              Export PDF
-            </Button>
+            <>
+              <Button
+                variant={isSpeaking ? "default" : "outline"}
+                size="sm"
+                onClick={handleSpeak}
+                className="gap-1"
+              >
+                {isSpeaking ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                {isSpeaking ? "Stop" : "Listen"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleExportPDF()} className="gap-1">
+                <Download className="h-3.5 w-3.5" />
+                Export PDF
+              </Button>
+            </>
           )}
 
           {bill.source_url && (
@@ -204,6 +288,11 @@ export function BillSummaryDialog({ bill, open, onOpenChange }: BillSummaryDialo
               <div className="flex items-center gap-2 mb-3">
                 <BookOpen className="h-4 w-4 text-primary" />
                 <h3 className="text-sm font-semibold text-foreground">Detailed Summary</h3>
+                {summaryLang !== "en" && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                    {SUMMARY_LANGUAGES.find(l => l.value === summaryLang)?.label}
+                  </span>
+                )}
               </div>
               {summary ? (
                 <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">

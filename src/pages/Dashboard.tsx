@@ -34,6 +34,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { data: documents, isLoading } = useDocuments();
   const deleteMutation = useDeleteDocument();
+  const { lang, setLang, t } = useLanguage();
 
   const filteredDocs = useMemo(() => {
     if (!documents) return [];

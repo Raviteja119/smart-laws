@@ -95,14 +95,31 @@ export default function Dashboard() {
       <div className="page-bg" />
       <div className="page-bg-accent" />
       <div className="page-header">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="page-title">Dashboard</h1>
+            <h1 className="page-title">{t("dashboard")}</h1>
             <p className="page-subtitle">Overview of your legislative analysis activity</p>
           </div>
-          <Button onClick={() => navigate("/upload")} className="gradient-primary text-primary-foreground">
-            <Upload className="h-4 w-4 mr-2" />Upload Bill
-          </Button>
+          <div className="flex items-center gap-3">
+            {/* Highlighted Language Switcher */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-primary/30 bg-primary/5 shadow-sm">
+              <Globe className="h-4 w-4 text-primary" />
+              <Select value={lang} onValueChange={(v) => setLang(v as any)}>
+                <SelectTrigger className="h-8 w-[130px] text-xs border-none bg-transparent shadow-none focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">🇬🇧 English</SelectItem>
+                  <SelectItem value="hi">🇮🇳 हिन्दी</SelectItem>
+                  <SelectItem value="te">🇮🇳 తెలుగు</SelectItem>
+                  <SelectItem value="ta">🇮🇳 தமிழ்</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={() => navigate("/upload")} className="gradient-primary text-primary-foreground">
+              <Upload className="h-4 w-4 mr-2" />{t("upload_bill")}
+            </Button>
+          </div>
         </div>
       </div>
 

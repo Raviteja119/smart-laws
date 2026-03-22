@@ -16,6 +16,9 @@ export interface Document {
   analysis: any;
   created_at: string;
   updated_at: string;
+  sector: string | null;
+  state: string | null;
+  financial_year: string | null;
 }
 
 export function useDocuments() {

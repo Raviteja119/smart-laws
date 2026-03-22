@@ -7,51 +7,58 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useUploadDocument } from "@/hooks/useDocuments";
 
-const ACCEPTED_KEYWORDS = [
+const ACCEPTED_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+];
+const ACCEPTED_EXTENSIONS = [".pdf", ".doc", ".docx", ".txt"];
+
+const GOV_KEYWORDS = [
   "bill", "act", "amendment", "ordinance", "regulation", "policy", "notification",
   "gazette", "parliament", "lok sabha", "rajya sabha", "legislative", "statute",
   "government", "ministry", "section", "chapter", "clause", "schedule",
   "central", "state", "union", "india", "bharat", "sarkar",
   "budget", "finance", "taxation", "compliance", "directive", "order",
+  "draft", "proposed", "enacted", "law", "legal", "judiciary",
+  "supreme court", "high court", "tribunal", "authority", "commission",
+  "resolution", "memorandum", "circular", "guideline",
 ];
-
-function isLikelyGovernmentDoc(file: File): boolean {
-  const name = file.name.toLowerCase();
-  // Check file name for government bill keywords
-  return ACCEPTED_KEYWORDS.some((kw) => name.includes(kw)) || 
-    name.endsWith(".pdf") || name.endsWith(".docx") || name.endsWith(".doc");
-}
 
 export default function UploadBill() {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [rejectedFileName, setRejectedFileName] = useState("");
+  const [rejectMessage, setRejectMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const uploadMutation = useUploadDocument();
-
-  const ACCEPTED_TYPES = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "text/plain",
-  ];
-  const ACCEPTED_EXTENSIONS = [".pdf", ".doc", ".docx", ".txt"];
 
   const validateFile = useCallback((file: File): boolean => {
     const ext = "." + file.name.split(".").pop()?.toLowerCase();
     const isValidType = ACCEPTED_TYPES.includes(file.type) || ACCEPTED_EXTENSIONS.includes(ext);
 
     if (!isValidType) {
-      setRejectedFileName(file.name);
+      setRejectMessage("Document upload error — try to upload a proper document. Only PDF, DOCX, DOC, and TXT formats are accepted.");
       setShowRejectDialog(true);
       return false;
     }
 
-    // Check file size (max 20MB)
     if (file.size > 20 * 1024 * 1024) {
-      setRejectedFileName(file.name);
+      setRejectMessage("Document upload error — file size exceeds 20MB limit. Please upload a smaller document.");
+      setShowRejectDialog(true);
+      return false;
+    }
+
+    // Check filename for government document keywords
+    const name = file.name.toLowerCase();
+    const hasGovKeyword = GOV_KEYWORDS.some((kw) => name.includes(kw));
+
+    if (!hasGovKeyword) {
+      setRejectMessage(
+        "Document upload error — try to upload a proper document. This platform only accepts official government bills, acts, policies, and legislative documents. Personal documents, resumes, assignments, and other non-government files are not accepted."
+      );
       setShowRejectDialog(true);
       return false;
     }
@@ -75,7 +82,6 @@ export default function UploadBill() {
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && validateFile(file)) setSelectedFile(file);
-    // Reset input so same file can be re-selected
     if (e.target) e.target.value = "";
   }, [validateFile]);
 
@@ -110,18 +116,13 @@ export default function UploadBill() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <ShieldAlert className="h-5 w-5" />
-              Document Not Accepted
+              Document Upload Error
             </DialogTitle>
-            <DialogDescription>
-              This platform only accepts official government bills, acts, policies, and legislative documents.
-            </DialogDescription>
+            <DialogDescription className="sr-only">Upload validation error</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-              <p className="text-sm font-medium text-foreground">"{rejectedFileName}"</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                This file does not appear to be a valid government legislative document.
-              </p>
+              <p className="text-sm font-medium text-foreground">{rejectMessage}</p>
             </div>
             <div className="text-sm text-muted-foreground space-y-1">
               <p className="font-medium text-foreground">Accepted documents include:</p>
@@ -134,7 +135,7 @@ export default function UploadBill() {
               </ul>
             </div>
             <div className="text-xs text-muted-foreground">
-              Supported formats: PDF, DOCX, DOC, TXT (max 20MB)
+              <strong>Tip:</strong> Make sure your file name contains relevant keywords like "bill", "act", "policy", "amendment", etc.
             </div>
             <Button onClick={() => setShowRejectDialog(false)} className="w-full">
               Understood

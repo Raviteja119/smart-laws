@@ -9,31 +9,21 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { bill, language } = await req.json();
+    const { bill, language, documentText } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-    if (!bill) throw new Error("Bill data is required");
+    if (!bill && !documentText) throw new Error("Bill data or document text is required");
 
+    const langMap: Record<string, string> = { hi: "Hindi", te: "Telugu", ta: "Tamil", en: "English" };
+    const targetLang = langMap[language] || "English";
     const langInstruction = language && language !== "en"
-      ? `IMPORTANT: Write the entire summary in ${language === "hi" ? "Hindi" : language === "te" ? "Telugu" : language === "ta" ? "Tamil" : "English"} language. Use the script native to that language.`
+      ? `CRITICAL INSTRUCTION: Write the ENTIRE summary in ${targetLang} language using native ${targetLang} script. Every single word must be in ${targetLang}. Do NOT mix English words.`
       : "";
 
-    const prompt = `You are an expert Indian legislative analyst. Provide a comprehensive, detailed summary of the following government bill/policy.
-
-Write exactly 2-3 rich, detailed paragraphs. Each paragraph should be 150-200 words long.
-
-Paragraph 1 — Background & Purpose: Explain the full context of why this bill was introduced, the problems it addresses, its historical background, which ministry or department proposed it, and the core objectives it aims to achieve.
-
-Paragraph 2 — Key Provisions & Implementation: Detail the major provisions, mechanisms, regulatory frameworks, compliance requirements, penalties, timelines, and how the bill will be implemented on the ground. Mention specific sections or chapters if known.
-
-Paragraph 3 — Impact & Stakeholder Analysis: Analyze who benefits, who is affected, expected economic and social impact, any controversies or criticisms, how it compares to existing laws, and the current status of the bill.
-
-DO NOT use bullet points, numbered lists, or headings. Write in flowing, connected prose paragraphs only. Be factual, balanced, and use simple language any citizen can understand.
-
-${langInstruction}
-
-Bill Details:
+    let contextBlock = "";
+    if (bill) {
+      contextBlock = `Bill Details:
 - Title: ${bill.title}
 - Sector: ${bill.sector}
 - State/Level: ${bill.state || "Central"}
@@ -42,9 +32,39 @@ Bill Details:
 - Ministry: ${bill.ministry || "Not specified"}
 - Bill Type: ${bill.bill_type || "Not specified"}
 - Introduced Date: ${bill.introduced_date || "Not specified"}
-- Description: ${bill.description || "No description available"}
+- Description: ${bill.description || "No description available"}`;
+    } else if (documentText) {
+      contextBlock = `Document Content:\n${documentText.slice(0, 8000)}`;
+    }
 
-Provide the summary now.`;
+    const prompt = `You are an expert Indian legislative analyst. Provide an extremely comprehensive, highly detailed summary of the following government bill/policy document.
+
+Your summary MUST be at least 600-800 words long, organized into 3-4 rich, detailed paragraphs. Each paragraph should be 150-250 words.
+
+Paragraph 1 — Historical Background, Context & Purpose:
+Explain in great depth why this bill/policy was introduced. What are the historical events, social conditions, economic factors, or governance gaps that led to its creation? Which ministry or department proposed it and under whose leadership? What existing laws or policies does it seek to replace, amend, or supplement? What are the core objectives, goals, and vision behind this legislation? Discuss any committee recommendations or public consultations that shaped the bill.
+
+Paragraph 2 — Detailed Key Provisions, Mechanisms & Implementation Framework:
+Provide an exhaustive breakdown of every major provision in the bill. What new regulatory bodies, committees, or authorities are being created? What are the specific compliance requirements, licensing frameworks, registration processes, and reporting obligations? Detail the penalties, fines, imprisonment terms for violations. What timelines and deadlines are set for implementation? How will the central and state governments coordinate? What budget allocations or financial mechanisms are involved? Mention specific sections, chapters, or schedules where relevant.
+
+Paragraph 3 — Comprehensive Stakeholder & Impact Analysis:
+Analyze in depth who benefits from this bill and how. Who faces new obligations or restrictions? What is the expected economic impact — GDP contribution, job creation, cost savings, or fiscal burden? What social impact will it have on marginalized communities, women, rural populations, small businesses, or specific industries? What environmental implications exist? Discuss any controversies, criticisms, or opposition from political parties, industry bodies, civil society, or legal experts. How does this compare to similar laws in other countries?
+
+Paragraph 4 — Current Status, Future Outlook & Citizen Relevance:
+What is the current legislative status? Has it been passed by both houses? Is it awaiting presidential assent? What amendments were proposed during debates? What are the next steps for implementation? How will this bill directly affect common citizens in their daily lives? What should citizens know about their rights and obligations under this law? What are the expected long-term consequences for India's governance and development?
+
+IMPORTANT RULES:
+- Write ONLY in flowing, connected prose paragraphs
+- DO NOT use bullet points, numbered lists, headings, or markdown formatting
+- Each paragraph must be substantial — at minimum 150 words
+- Be factual, balanced, and use language any citizen can understand
+- Include specific details, numbers, dates, and examples wherever possible
+
+${langInstruction}
+
+${contextBlock}
+
+Provide the detailed summary now.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -55,7 +75,7 @@ Provide the summary now.`;
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "You are an expert Indian legislative analyst who explains bills and policies in detail for common citizens. Always write in clear, detailed paragraphs — never use bullet points or short lists. Your summaries should be comprehensive and educational." },
+          { role: "system", content: `You are an expert Indian legislative analyst who explains bills and policies in extraordinary detail for common citizens. You always write in rich, comprehensive, flowing paragraphs — never use bullet points, numbered lists, or short summaries. Your summaries are thorough, educational, and at least 600-800 words long. ${langInstruction}` },
           { role: "user", content: prompt },
         ],
         stream: true,

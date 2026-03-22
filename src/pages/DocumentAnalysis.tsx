@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,23 +6,40 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   FileText, Users, AlertTriangle, Calendar, List, Eye, Loader2,
   MessageSquare, Download, Upload, History, Bookmark, BookmarkCheck,
-  Tag, Plus, SplitSquareHorizontal,
+  Tag, Plus, Sparkles, Globe, Volume2, VolumeX, BookOpen,
 } from "lucide-react";
 import { useDocument, useDocuments } from "@/hooks/useDocuments";
 import { useDocumentVersions, useCreateVersion } from "@/hooks/useDocumentVersions";
 import { useBookmarks, useAddBookmark, useDeleteBookmark } from "@/hooks/useBookmarks";
 import { useTags, useDocumentTags, useCreateTag, useToggleDocumentTag } from "@/hooks/useTags";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { exportAsPDF, exportAsCSV } from "@/lib/exportDocument";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
 
 const TAG_COLORS = ["blue", "green", "red", "purple", "orange", "pink"];
+
+const SUMMARY_LANGUAGES = [
+  { value: "en", label: "English", flag: "🇬🇧" },
+  { value: "hi", label: "हिन्दी (Hindi)", flag: "🇮🇳" },
+  { value: "te", label: "తెలుగు (Telugu)", flag: "🇮🇳" },
+  { value: "ta", label: "தமிழ் (Tamil)", flag: "🇮🇳" },
+];
+
+const SPEECH_LANG_MAP: Record<string, string> = {
+  en: "en-IN",
+  hi: "hi-IN",
+  te: "te-IN",
+  ta: "ta-IN",
+};
 
 export default function DocumentAnalysis() {
   const [searchParams] = useSearchParams();
@@ -44,6 +61,13 @@ export default function DocumentAnalysis() {
   const [newTagName, setNewTagName] = useState("");
   const [annotationNote, setAnnotationNote] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // AI Summary state
+  const [aiSummary, setAiSummary] = useState("");
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [hasSummarized, setHasSummarized] = useState(false);
+  const [summaryLang, setSummaryLang] = useState("en");
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const analysis = (document?.analysis as any) || {};
   const linkedTagIds = new Set((docTagLinks || []).map((l: any) => l.tag_id));
@@ -91,6 +115,139 @@ export default function DocumentAnalysis() {
     if (file && docId) createVersion.mutate({ documentId: docId, file });
   };
 
+  // AI Summarization
+  const handleSummarize = useCallback(async (targetLang?: string) => {
+    if (!document) return;
+    const langToUse = targetLang || summaryLang;
+    setIsSummarizing(true);
+    setAiSummary("");
+    setHasSummarized(true);
+
+    // Build bill-like object from document data
+    const billData = {
+      title: document.name,
+      sector: document.sector || "General",
+      state: document.state || "Central",
+      financial_year: document.financial_year || "2024-25",
+      status: document.status || "Uploaded",
+      ministry: "Not specified",
+      bill_type: "Uploaded Document",
+      introduced_date: document.created_at,
+      description: analysis.summary || document.name,
+    };
+
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/summarize-bill`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ bill: billData, language: langToUse }),
+        }
+      );
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: "Failed to summarize" }));
+        throw new Error(err.error || "Failed to summarize");
+      }
+
+      if (!resp.body) throw new Error("No response body");
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, newlineIndex);
+          buffer = buffer.slice(newlineIndex + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              accumulated += content;
+              setAiSummary(accumulated);
+            }
+          } catch {
+            buffer = line + "\n" + buffer;
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      toast({
+        title: "Summarization failed",
+        description: e instanceof Error ? e.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSummarizing(false);
+    }
+  }, [document, summaryLang, analysis.summary]);
+
+  const handleLanguageChange = (newLang: string) => {
+    setSummaryLang(newLang);
+    if (hasSummarized && !isSummarizing) {
+      handleSummarize(newLang);
+    }
+  };
+
+  const handleSpeak = useCallback(() => {
+    if (!aiSummary) return;
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(aiSummary);
+    utterance.lang = SPEECH_LANG_MAP[summaryLang] || "en-IN";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      toast({ title: "Audio Error", description: "Speech synthesis is not available on this device.", variant: "destructive" });
+    };
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  }, [aiSummary, summaryLang, isSpeaking]);
+
+  const handleExportSummaryPDF = useCallback(() => {
+    if (!document || !aiSummary) return;
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(document.name, 15, 20, { maxWidth: 180 });
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Status: ${document.status} | Uploaded: ${new Date(document.created_at).toLocaleDateString("en-IN")}`, 15, 35);
+    doc.setDrawColor(200);
+    doc.line(15, 38, 195, 38);
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    const lines = doc.splitTextToSize(aiSummary, 175);
+    let y = 45;
+    for (const line of lines) {
+      if (y > 275) { doc.addPage(); y = 20; }
+      doc.text(line, 15, y);
+      y += 6;
+    }
+    doc.save(`${document.name.slice(0, 50).replace(/[^a-zA-Z0-9]/g, "_")}_summary.pdf`);
+    toast({ title: "PDF downloaded", description: "Summary exported successfully" });
+  }, [document, aiSummary]);
+
   if (isLoading) {
     return (
       <div className="page-container flex items-center justify-center min-h-[50vh]">
@@ -124,7 +281,6 @@ export default function DocumentAnalysis() {
             )}
             {document && document.status === "analyzed" && (
               <>
-                {/* Tags */}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm"><Tag className="h-4 w-4 mr-1" />Tags</Button>
@@ -199,7 +355,6 @@ export default function DocumentAnalysis() {
           </div>
         </div>
 
-        {/* Display linked tags */}
         {docTagLinks && docTagLinks.length > 0 && (
           <div className="flex gap-2 mt-3 flex-wrap">
             {docTagLinks.map((link: any) => (
@@ -226,18 +381,96 @@ export default function DocumentAnalysis() {
         </div>
       ) : (
         <>
-          {analysis.summary && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-4">
-              <h3 className="section-title mb-2">{t("summary")}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{analysis.summary}</p>
-              <div className="flex gap-4 mt-4">
-                {document.token_count && <Badge variant="secondary">{document.token_count.toLocaleString()} tokens</Badge>}
-                {document.compression_rate && (
-                  <Badge className="bg-success/10 text-success border-success/20">{document.compression_rate}% compression</Badge>
-                )}
+          {/* AI Detailed Summary Section */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6 mb-4">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Button
+                onClick={() => handleSummarize()}
+                disabled={isSummarizing}
+                size="sm"
+                className="gap-2"
+              >
+                {isSummarizing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                {isSummarizing ? "Summarizing..." : hasSummarized ? "Re-summarize" : "Summarize Document"}
+              </Button>
+
+              <div className="flex items-center gap-1.5">
+                <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                <Select value={summaryLang} onValueChange={handleLanguageChange}>
+                  <SelectTrigger className="h-8 w-[160px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUMMARY_LANGUAGES.map((l) => (
+                      <SelectItem key={l.value} value={l.value}>
+                        <span className="flex items-center gap-2">
+                          <span>{l.flag}</span>
+                          <span>{l.label}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </motion.div>
-          )}
+
+              {hasSummarized && aiSummary && !isSummarizing && (
+                <>
+                  <Button
+                    variant={isSpeaking ? "default" : "outline"}
+                    size="sm"
+                    onClick={handleSpeak}
+                    className="gap-1"
+                  >
+                    {isSpeaking ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                    {isSpeaking ? "Stop" : "Listen"}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleExportSummaryPDF} className="gap-1">
+                    <Download className="h-3.5 w-3.5" />
+                    Export PDF
+                  </Button>
+                </>
+              )}
+            </div>
+
+            {hasSummarized && (
+              <ScrollArea className="max-h-[50vh]">
+                <div className="pr-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookOpen className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">Detailed AI Summary</h3>
+                    {summaryLang !== "en" && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                        {SUMMARY_LANGUAGES.find(l => l.value === summaryLang)?.label}
+                      </span>
+                    )}
+                  </div>
+                  {aiSummary ? (
+                    <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                      {aiSummary}
+                    </div>
+                  ) : isSummarizing ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Generating detailed summary...
+                    </div>
+                  ) : null}
+                </div>
+              </ScrollArea>
+            )}
+
+            {!hasSummarized && analysis.summary && (
+              <div>
+                <h3 className="section-title mb-2">{t("summary")}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{analysis.summary}</p>
+                <div className="flex gap-4 mt-4">
+                  {document.token_count && <Badge variant="secondary">{document.token_count.toLocaleString()} tokens</Badge>}
+                  {document.compression_rate && (
+                    <Badge className="bg-success/10 text-success border-success/20">{document.compression_rate}% compression</Badge>
+                  )}
+                </div>
+              </div>
+            )}
+          </motion.div>
 
           {/* Annotations section */}
           {bookmarks && bookmarks.filter((b) => b.note && !b.clause_id).length > 0 && (
